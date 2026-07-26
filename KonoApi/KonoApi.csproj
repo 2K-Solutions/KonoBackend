@@ -15,5 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kono.Identity\Kono.Identity.csproj" />
+    <ProjectReference Include="..\Kono.Infrastructure\Kono.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
