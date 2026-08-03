@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Kono.Infrastructure.Migrations
 {
     [DbContext(typeof(KonoDbContext))]
-    [Migration("20260729193910_AddPendingModelChanges")]
-    partial class AddPendingModelChanges
+    [Migration("20260803181605_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -52,12 +52,9 @@ namespace Kono.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(256)");
 
-                    b.Property<int>("PhoneNumber")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("RestaurantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("RestaurantID");
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("SecondName")
                         .IsRequired()
@@ -129,7 +126,7 @@ namespace Kono.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(100)");
 
-                    b.Property<Guid>("RestaurantId")
+                    b.Property<Guid?>("RestaurantId")
                         .HasColumnType("uuid")
                         .HasColumnName("RestaurantID");
 
