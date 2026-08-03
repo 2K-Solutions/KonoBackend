@@ -8,7 +8,7 @@ public class Owner
     public string Password { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string SecondName { get; set; } = string.Empty;
-    public int PhoneNumber { get; set; }
+    public string PhoneNumber { get; set; } = string.Empty;
     public bool? IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }

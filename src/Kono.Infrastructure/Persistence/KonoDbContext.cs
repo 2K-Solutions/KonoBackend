@@ -89,7 +89,7 @@ public class KonoDbContext : DbContext
                 .IsRequired();
 
             entity.Property(e => e.PhoneNumber)
-                .HasColumnType("integer")
+                .HasColumnType("varchar(100)")
                 .IsRequired();
 
             entity.Property(e => e.IsActive)

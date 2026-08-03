@@ -53,7 +53,7 @@ public static class DataSeeder
                     Password = BCrypt.Net.BCrypt.HashPassword("OwnerPass123!"),
                     FirstName = "Kono",
                     SecondName = "Owner",
-                    PhoneNumber = 12345678,
+                    PhoneNumber = "+12345678",
                     IsActive = true,
                     CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
                 });
