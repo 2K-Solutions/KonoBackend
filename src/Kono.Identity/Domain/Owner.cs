@@ -3,7 +3,6 @@ namespace Kono.Identity.Domain.Owners;
 public class Owner
 {
     public Guid Id { get; set; }
-    public Guid RestaurantId { get; set; }
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;

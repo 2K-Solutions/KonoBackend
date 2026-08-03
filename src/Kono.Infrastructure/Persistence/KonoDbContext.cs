@@ -68,10 +68,6 @@ public class KonoDbContext : DbContext
             entity.ToTable("Owners");
             entity.HasKey(e => e.Id);
 
-            entity.Property(e => e.RestaurantId)
-                .HasColumnName("RestaurantID")
-                .HasColumnType("uuid");
-
             entity.Property(e => e.Email)
                 .HasColumnType("varchar(256)")
                 .IsRequired();

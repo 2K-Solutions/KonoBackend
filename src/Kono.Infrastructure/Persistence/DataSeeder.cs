@@ -48,7 +48,6 @@ public static class DataSeeder
                 context.Owners.Add(new Owner
                 {
                     Id = Guid.NewGuid(),
-                    RestaurantId = Guid.NewGuid(),
                     Email = "owner@kono.app",
                     Password = BCrypt.Net.BCrypt.HashPassword("OwnerPass123!"),
                     FirstName = "Kono",
