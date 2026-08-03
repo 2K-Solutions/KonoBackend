@@ -11,7 +11,7 @@ public interface IAuthenticationService
 {
     Task<LoginResult> LoginUserAsync(string email, string password);
     Task<LoginResult> RegisterUserAsync(string email, string password, string username,
-        string? firstName, string? secondName, string? phoneNumber, int? userRole, string? mobilePhoneType);
+        string? firstName, string? secondName, string? phoneNumber, UserRole? userRole, string? mobilePhoneType);
     Task<LoginResult> RefreshUserTokenAsync(string refreshToken);
     Task<bool> ValidateRefreshTokenAsync(string refreshToken);
     Task RevokeRefreshTokenAsync(string refreshToken);
@@ -70,7 +70,7 @@ public class AuthenticationService : IAuthenticationService
     }
 
     public async Task<LoginResult> RegisterUserAsync(string email, string password, string username,
-        string? firstName, string? secondName, string? phoneNumber, int? userRole, string? mobilePhoneType)
+        string? firstName, string? secondName, string? phoneNumber, UserRole? userRole, string? mobilePhoneType)
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {

@@ -23,7 +23,7 @@ public static class DataSeeder
                     FirstName = "Kono",
                     SecondName = "User",
                     PhoneNumber = "+1234567890",
-                    UserRole = 1,
+                    UserRole = UserRole.Waiter,
                     MobilePhoneType = "Android",
                     CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
                 },
@@ -37,7 +37,7 @@ public static class DataSeeder
                     FirstName = "Mobile",
                     SecondName = "Client",
                     PhoneNumber = "+1987654321",
-                    UserRole = 2,
+                    UserRole = UserRole.Waiter,
                     MobilePhoneType = "iOS",
                     CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
                 });

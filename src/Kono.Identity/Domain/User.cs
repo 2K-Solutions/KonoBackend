@@ -10,7 +10,7 @@ public class User
     public string FirstName { get; set; } = string.Empty;
     public string SecondName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
-    public int? UserRole { get; set; }
+    public UserRole? UserRole { get; set; }
     public string? MobilePhoneType { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }

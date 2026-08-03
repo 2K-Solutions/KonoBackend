@@ -1,3 +1,4 @@
+using Kono.Identity.Domain.Users;
 using Kono.Infrastructure.Persistence;
 using Kono.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -135,6 +136,6 @@ public class RegisterRequest
     public string FirstName { get; set; } = string.Empty;
     public string SecondName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
-    public int? UserRole { get; set; }
+    public UserRole? UserRole { get; set; }
     public string MobilePhoneType { get; set; } = string.Empty;
 }
