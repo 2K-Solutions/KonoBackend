@@ -3,7 +3,7 @@ namespace Kono.Identity.Domain.Users;
 public class User
 {
     public Guid Id { get; set; }
-    public Guid RestaurantId { get; set; }
+    public Guid? RestaurantId { get; set; }
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;

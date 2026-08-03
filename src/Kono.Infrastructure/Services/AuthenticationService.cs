@@ -98,7 +98,7 @@ public class AuthenticationService : IAuthenticationService
         var newUser = new Kono.Identity.Domain.Users.User
         {
             Id = Guid.NewGuid(),
-            RestaurantId = Guid.NewGuid(),
+            RestaurantId = null,
             Email = email,
             Password = hashed,
             Username = username ?? string.Empty,
