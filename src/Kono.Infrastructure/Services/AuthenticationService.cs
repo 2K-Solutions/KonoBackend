@@ -10,6 +10,7 @@ namespace Kono.Infrastructure.Services;
 public interface IAuthenticationService
 {
     Task<LoginResult> LoginUserAsync(string email, string password);
+    Task<LoginResult> LoginOwnerAsync(string email, string password);
     Task<LoginResult> RegisterUserAsync(string email, string password, string username,
         string? firstName, string? secondName, string? phoneNumber, UserRole? userRole, string? mobilePhoneType);
     Task<LoginResult> RefreshUserTokenAsync(string refreshToken);
@@ -20,12 +21,18 @@ public interface IAuthenticationService
 public class AuthenticationService : IAuthenticationService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IOwnerRepository _ownerRepository;
     private readonly IRefreshTokenRepository _refreshRepository;
     private readonly IJwtTokenService _jwtTokenService;
 
-    public AuthenticationService(IUserRepository userRepository, IRefreshTokenRepository refreshRepository, IJwtTokenService jwtTokenService)
+    public AuthenticationService(
+        IUserRepository userRepository,
+        IOwnerRepository ownerRepository,
+        IRefreshTokenRepository refreshRepository,
+        IJwtTokenService jwtTokenService)
     {
         _userRepository = userRepository;
+        _ownerRepository = ownerRepository;
         _refreshRepository = refreshRepository;
         _jwtTokenService = jwtTokenService;
     }
@@ -43,7 +50,7 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email);
+        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, "worker");
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
 
         var refreshTokenEntity = new RefreshToken
@@ -66,6 +73,45 @@ public class AuthenticationService : IAuthenticationService
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             UserId = user.Id
+        };
+    }
+
+    public async Task<LoginResult> LoginOwnerAsync(string email, string password)
+    {
+        var owner = await _ownerRepository.GetByEmailAsync(email);
+
+        if (owner == null || !BCrypt.Net.BCrypt.Verify(password, owner.Password))
+        {
+            return new LoginResult
+            {
+                Success = false,
+                Message = "Invalid email or password"
+            };
+        }
+
+        var accessToken = _jwtTokenService.GenerateAccessToken(owner.Id, owner.Email, "owner");
+        var refreshToken = _jwtTokenService.GenerateRefreshToken();
+
+        var refreshTokenEntity = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = owner.Id,
+            Token = refreshToken,
+            ExpiryDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(_jwtTokenService.GetRefreshTokenExpirationDays()), DateTimeKind.Unspecified),
+            IsRevoked = false,
+            CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
+        };
+
+        await _refreshRepository.AddAsync(refreshTokenEntity);
+        await _refreshRepository.SaveChangesAsync();
+
+        return new LoginResult
+        {
+            Success = true,
+            Message = "Login successful",
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            UserId = owner.Id
         };
     }
 
@@ -112,7 +158,7 @@ public class AuthenticationService : IAuthenticationService
 
         await _userRepository.AddAsync(newUser);
 
-        var accessToken = _jwtTokenService.GenerateAccessToken(newUser.Id, newUser.Email);
+        var accessToken = _jwtTokenService.GenerateAccessToken(newUser.Id, newUser.Email, "worker");
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
 
         var refreshTokenEntity = new Kono.Identity.Domain.RefreshTokens.RefreshToken
@@ -161,7 +207,7 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        var newAccessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email);
+        var newAccessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, "worker");
         var newRefreshToken = _jwtTokenService.GenerateRefreshToken();
 
         storedRefreshToken.IsRevoked = true;

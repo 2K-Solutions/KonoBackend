@@ -33,6 +33,18 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("owner/login")]
+    public async Task<IActionResult> OwnerLogin([FromBody] LoginRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+            return BadRequest(new { message = "Email and password are required" });
+
+        var result = await _authService.LoginOwnerAsync(request.Email, request.Password);
+        if (!result.Success) return Unauthorized(new { message = result.Message });
+
+        return Ok(result);
+    }
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {

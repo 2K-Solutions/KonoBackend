@@ -9,7 +9,7 @@ namespace Kono.Infrastructure.Services;
 
 public interface IJwtTokenService
 {
-    string GenerateAccessToken(Guid userId, string email);
+    string GenerateAccessToken(Guid userId, string email, string accountType);
     string GenerateRefreshToken();
     int GetRefreshTokenExpirationDays();
     ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
@@ -24,7 +24,7 @@ public class JwtTokenService : IJwtTokenService
         _configuration = configuration;
     }
 
-    public string GenerateAccessToken(Guid userId, string email)
+    public string GenerateAccessToken(Guid userId, string email, string accountType)
     {
         var securityKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_configuration["Jwt:SigningKey"] ?? throw new InvalidOperationException("JWT SigningKey not configured")));
@@ -33,7 +33,8 @@ public class JwtTokenService : IJwtTokenService
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-            new Claim(ClaimTypes.Email, email)
+            new Claim(ClaimTypes.Email, email),
+            new Claim("accountType", accountType)
         };
 
         var token = new JwtSecurityToken(
