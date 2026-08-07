@@ -1,4 +1,5 @@
 using Kono.Identity.Domain.Owners;
+using Kono.Identity.Domain.Restaurants;
 using Kono.Identity.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,15 +46,32 @@ public static class DataSeeder
 
         if (!await context.Owners.AnyAsync())
         {
-                context.Owners.Add(new Owner
+            var owner = new Owner
+            {
+                Id = Guid.NewGuid(),
+                Email = "owner@kono.app",
+                Password = BCrypt.Net.BCrypt.HashPassword("OwnerPass123!"),
+                FirstName = "Kono",
+                SecondName = "Owner",
+                PhoneNumber = "+12345678",
+                IsActive = true,
+                CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
+            };
+            context.Owners.Add(owner);
+
+            context.Restaurants.AddRange(
+                new Restaurant
                 {
                     Id = Guid.NewGuid(),
-                    Email = "owner@kono.app",
-                    Password = BCrypt.Net.BCrypt.HashPassword("OwnerPass123!"),
-                    FirstName = "Kono",
-                    SecondName = "Owner",
-                    PhoneNumber = "+12345678",
-                    IsActive = true,
+                    OwnerId = owner.Id,
+                    Name = "Kono Rijeka",
+                    CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
+                },
+                new Restaurant
+                {
+                    Id = Guid.NewGuid(),
+                    OwnerId = owner.Id,
+                    Name = "Kono Zagreb",
                     CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
                 });
         }

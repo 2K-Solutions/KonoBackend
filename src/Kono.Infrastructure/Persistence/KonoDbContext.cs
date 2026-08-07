@@ -1,5 +1,6 @@
 using Kono.Identity.Domain.Owners;
 using Kono.Identity.Domain.RefreshTokens;
+using Kono.Identity.Domain.Restaurants;
 using Kono.Identity.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +14,7 @@ public class KonoDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Owner> Owners => Set<Owner>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Restaurant> Restaurants => Set<Restaurant>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -127,5 +129,26 @@ public class KonoDbContext : DbContext
             entity.Property(e => e.RevokedAt)
                 .HasColumnType("timestamp with time zone");
          });
+
+        modelBuilder.Entity<Restaurant>(entity =>
+        {
+            entity.ToTable("Restaurants");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.OwnerId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.Name)
+                .HasColumnType("varchar(256)")
+                .IsRequired();
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.Property(e => e.DeletedAt)
+                .HasColumnType("timestamp with time zone");
+        });
      }
  }
