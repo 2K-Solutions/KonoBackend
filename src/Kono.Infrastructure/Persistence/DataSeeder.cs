@@ -11,13 +11,15 @@ public static class DataSeeder
     {
         await context.Database.MigrateAsync();
 
+        var mainRestaurantId = Guid.NewGuid();
+
         if (!await context.Users.AnyAsync())
         {
             context.Users.AddRange(
                 new User
                 {
                     Id = Guid.NewGuid(),
-                    RestaurantId = Guid.NewGuid(),
+                    RestaurantId = mainRestaurantId,
                     Email = "user@kono.app",
                     Password = BCrypt.Net.BCrypt.HashPassword("Password123!"),
                     Username = "kono_user",
@@ -31,7 +33,7 @@ public static class DataSeeder
                 new User
                 {
                     Id = Guid.NewGuid(),
-                    RestaurantId = Guid.NewGuid(),
+                    RestaurantId = null,
                     Email = "mobile@kono.app",
                     Password = BCrypt.Net.BCrypt.HashPassword("Password123!"),
                     Username = "mobile_user",
@@ -62,16 +64,20 @@ public static class DataSeeder
             context.Restaurants.AddRange(
                 new Restaurant
                 {
-                    Id = Guid.NewGuid(),
+                    Id = mainRestaurantId,
                     OwnerId = owner.Id,
-                    Name = "Kono Rijeka",
+                    RestaurantName = "Kono Rijeka",
+                    City = "Rijeka",
+                    Address = "Example Address 1",
                     CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
                 },
                 new Restaurant
                 {
                     Id = Guid.NewGuid(),
                     OwnerId = owner.Id,
-                    Name = "Kono Zagreb",
+                    RestaurantName = "Kono Zagreb",
+                    City = "Zagreb",
+                    Address = "Example Address 2",
                     CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
                 });
         }
