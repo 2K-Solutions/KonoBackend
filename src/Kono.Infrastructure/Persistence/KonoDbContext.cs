@@ -135,11 +135,22 @@ public class KonoDbContext : DbContext
             entity.ToTable("Restaurants");
             entity.HasKey(e => e.Id);
 
+            entity.Property(e => e.IsActive)
+                .HasColumnType("boolean");
+
             entity.Property(e => e.OwnerId)
                 .HasColumnType("uuid")
                 .IsRequired();
 
-            entity.Property(e => e.Name)
+            entity.Property(e => e.RestaurantName)
+                .HasColumnType("varchar(256)")
+                .IsRequired();
+            
+            entity.Property(e => e.City)
+                .HasColumnType("varchar(256)")
+                .IsRequired();
+
+            entity.Property(e => e.Address)
                 .HasColumnType("varchar(256)")
                 .IsRequired();
 

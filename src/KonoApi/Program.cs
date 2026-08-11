@@ -32,12 +32,12 @@ builder.Services.AddSwaggerGen(c =>
 
     c.AddSecurityDefinition("Bearer", bearerScheme);
 
-    var schemeRef = new OpenApiSecuritySchemeReference("Bearer", null, null);
-    c.AddSecurityRequirement(doc =>
+    c.AddSecurityRequirement(_ => new OpenApiSecurityRequirement
     {
-        var req = new OpenApiSecurityRequirement();
-        req.Add(schemeRef, new List<string>());
-        return req;
+        {
+            new OpenApiSecuritySchemeReference("Bearer", _),
+            new List<string>()
+        }
     });
 });
 

@@ -151,3 +151,5 @@ public class RegisterRequest
     public UserRole? UserRole { get; set; }
     public string MobilePhoneType { get; set; } = string.Empty;
 }
+
+

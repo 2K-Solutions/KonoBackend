@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kono.Identity\Kono.Identity.csproj" />
-    <ProjectReference Include="..\Kono.Restaurants\Kono.Restaurants.csproj" />
   </ItemGroup>
 
 </Project>
