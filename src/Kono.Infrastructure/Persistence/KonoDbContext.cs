@@ -15,6 +15,7 @@ public class KonoDbContext : DbContext
     public DbSet<Owner> Owners => Set<Owner>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Restaurant> Restaurants => Set<Restaurant>();
+    public DbSet<RestaurantInvite> RestaurantInvites => Set<RestaurantInvite>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -159,6 +160,39 @@ public class KonoDbContext : DbContext
                 .IsRequired();
 
             entity.Property(e => e.DeletedAt)
+                .HasColumnType("timestamp with time zone");
+        });
+
+        modelBuilder.Entity<RestaurantInvite>(entity =>
+        {
+            entity.ToTable("RestaurantInvites");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.RestaurantId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.OwnerId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.UserId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.Status)
+                .HasColumnType("integer")
+                .IsRequired();
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.Property(e => e.ExpiresAt)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.Property(e => e.RespondedAt)
                 .HasColumnType("timestamp with time zone");
         });
      }
