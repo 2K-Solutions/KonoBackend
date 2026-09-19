@@ -2,6 +2,7 @@ using Kono.Identity.Domain.Owners;
 using Kono.Identity.Domain.RefreshTokens;
 using Kono.Identity.Domain.Restaurants;
 using Kono.Identity.Domain.Users;
+using Kono.Orders.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace Kono.Infrastructure.Persistence;
@@ -16,6 +17,8 @@ public class KonoDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Restaurant> Restaurants => Set<Restaurant>();
     public DbSet<RestaurantInvite> RestaurantInvites => Set<RestaurantInvite>();
+    public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+    public DbSet<CurrentOrders> CurrentOrders => Set<CurrentOrders>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -194,6 +197,46 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.RespondedAt)
                 .HasColumnType("timestamp with time zone");
+        });
+
+        modelBuilder.Entity<MenuItem>(entity =>
+        {
+            entity.ToTable("MenuItems");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.RestaurantId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.IsDrink)
+                .HasColumnType("boolean")
+                .IsRequired();
+    
+            entity.Property(e => e.Name)
+                .HasColumnType("varchar(256)")
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<CurrentOrders>(entity =>
+        {
+            entity.ToTable("CurrentOrders");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.RestaurantId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.UserId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.TableId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.IsActive)
+                .HasColumnType("boolean")
+                .IsRequired();
         });
      }
  }

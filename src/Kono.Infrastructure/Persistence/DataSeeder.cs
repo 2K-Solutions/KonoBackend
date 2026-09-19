@@ -80,7 +80,44 @@ public static class DataSeeder
                     Address = "Example Address 2",
                     CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
                 });
+
         }
+        if(!await context.MenuItems.AnyAsync())
+        {
+            var menuRestaurantId = await context.Restaurants
+                .Where(r => r.RestaurantName == "Kono Rijeka")
+                .Select(r => r.Id)
+                .FirstOrDefaultAsync();
+
+            if (menuRestaurantId != Guid.Empty)
+            {
+                context.MenuItems.AddRange(
+                    new MenuItem
+                    {
+                        Id = Guid.NewGuid(),
+                        RestaurantId = menuRestaurantId,
+                        IsDrink = false,
+                        Name = "Margherita"
+                    },
+                    new MenuItem
+                    {
+                        Id = Guid.NewGuid(),
+                        RestaurantId = menuRestaurantId,
+                        IsDrink = false,
+                        Name = "Cevapi"
+                    },
+                    new MenuItem
+                    {
+                        Id = Guid.NewGuid(),
+                        RestaurantId = menuRestaurantId,
+                        IsDrink = true,
+                        Name = "Coca Cola"
+                    }
+
+                );
+            }
+        }
+        
 
         await context.SaveChangesAsync();
     }

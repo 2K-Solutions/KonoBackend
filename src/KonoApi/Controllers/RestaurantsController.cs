@@ -200,6 +200,30 @@ public class RestaurantsController : ControllerBase
 
         return Ok(new { user.Id, user.RestaurantId });
     }
+
+    [HttpPatch("kick/{userId:guid}")]
+    public async Task<IActionResult> KickUser(Guid userId)
+    {
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "owner") return Forbid();
+
+        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId && u.DeletedAt == null);
+        if (user is null) return NotFound(new { message = "User not found" });
+        if (user.RestaurantId is null) return BadRequest(new { message = "User does not belong to a restaurant" });
+
+        var restaurant = await _context.Restaurants
+            .FirstOrDefaultAsync(r => r.Id == user.RestaurantId && r.OwnerId == ownerId && r.DeletedAt == null);
+        if (restaurant is null) return Forbid();
+
+        user.RestaurantId = null;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { user.Id, user.RestaurantId });
+    }
 }
 
 public class CreateRestaurantInviteRequest
