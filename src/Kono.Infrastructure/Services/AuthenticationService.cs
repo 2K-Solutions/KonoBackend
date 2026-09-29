@@ -1,5 +1,5 @@
 using Kono.Infrastructure.Persistence;
-using Kono.Infrastructure.Repositories;
+using Kono.Identity.Repositories;
 using Kono.Identity.Domain.Users;
 using Kono.Identity.Domain.Users.Login;
 using Kono.Identity.Domain.RefreshTokens;

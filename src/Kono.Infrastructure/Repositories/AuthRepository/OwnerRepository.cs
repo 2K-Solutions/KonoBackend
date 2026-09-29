@@ -1,8 +1,9 @@
 using Kono.Infrastructure.Persistence;
 using Kono.Identity.Domain.Owners;
+using Kono.Identity.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace Kono.Infrastructure.Repositories;
+namespace Kono.Infrastructure.Auth.Repositories;
 
 public class OwnerRepository : IOwnerRepository
 {

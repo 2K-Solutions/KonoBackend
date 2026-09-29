@@ -1,6 +1,6 @@
 using Kono.Identity.Domain.RefreshTokens;
 
-namespace Kono.Infrastructure.Repositories;
+namespace Kono.Identity.Repositories;
 
 public interface IRefreshTokenRepository
 {

@@ -11,6 +11,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kono.Identity", "src\Kono.I
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kono.Restaurants", "src\Kono.Restaurants\Kono.Restaurants.csproj", "{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kono.Orders", "src\Kono.Orders\Kono.Orders.csproj", "{02BA93B1-FD4F-426E-B308-59A6B54C8021}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,8 +61,36 @@ Global
 		{12345678-1234-1234-1234-123456789003}.Release|x64.Build.0 = Release|Any CPU
 		{12345678-1234-1234-1234-123456789003}.Release|x86.ActiveCfg = Release|Any CPU
 		{12345678-1234-1234-1234-123456789003}.Release|x86.Build.0 = Release|Any CPU
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}.Debug|x64.Build.0 = Debug|Any CPU
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}.Debug|x86.Build.0 = Debug|Any CPU
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}.Release|x64.ActiveCfg = Release|Any CPU
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}.Release|x64.Build.0 = Release|Any CPU
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}.Release|x86.ActiveCfg = Release|Any CPU
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65}.Release|x86.Build.0 = Release|Any CPU
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Debug|x64.Build.0 = Debug|Any CPU
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Debug|x86.Build.0 = Debug|Any CPU
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Release|x64.ActiveCfg = Release|Any CPU
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Release|x64.Build.0 = Release|Any CPU
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Release|x86.ActiveCfg = Release|Any CPU
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{02BA93B1-FD4F-426E-B308-59A6B54C8021} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

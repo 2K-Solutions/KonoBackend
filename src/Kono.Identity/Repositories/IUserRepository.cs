@@ -1,6 +1,6 @@
 using Kono.Identity.Domain.Users;
 
-namespace Kono.Infrastructure.Repositories;
+namespace Kono.Identity.Repositories;
 
 public interface IUserRepository
 {

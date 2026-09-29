@@ -1,6 +1,6 @@
 using Kono.Identity.Domain.Owners;
 using Kono.Identity.Domain.RefreshTokens;
-using Kono.Identity.Domain.Restaurants;
+using Kono.Restaurants.Domain;
 using Kono.Identity.Domain.Users;
 using Kono.Orders.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +19,7 @@ public class KonoDbContext : DbContext
     public DbSet<RestaurantInvite> RestaurantInvites => Set<RestaurantInvite>();
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
     public DbSet<CurrentOrders> CurrentOrders => Set<CurrentOrders>();
+    public DbSet<OrderInfo> OrderInfo => Set<OrderInfo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -236,6 +237,32 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.IsActive)
                 .HasColumnType("boolean")
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<OrderInfo>(entity =>
+        {
+            entity.ToTable("OrderInfo");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.OrderId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.MenuItemId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.IsDrink)
+                .HasColumnType("boolean")
+                .IsRequired();
+
+            entity.Property(e => e.ItemDescription)
+                .HasColumnType("varchar(256)")
+                .IsRequired();
+
+            entity.Property(e => e.Quantity)
+                .HasColumnType("integer")
                 .IsRequired();
         });
      }

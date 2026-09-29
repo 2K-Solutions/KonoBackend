@@ -1,6 +1,7 @@
 using Kono.Infrastructure.Persistence;
 using Kono.Infrastructure.Services;
-using Kono.Infrastructure.Repositories;
+using Kono.Infrastructure.Auth.Repositories;
+using Kono.Identity.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
