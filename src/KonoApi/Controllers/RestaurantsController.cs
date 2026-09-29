@@ -1,5 +1,7 @@
-using Kono.Identity.Domain.Restaurants;
+using Kono.Restaurants.Domain;
 using Kono.Infrastructure.Persistence;
+using KonoApi.Contracts.Auth;
+using KonoApi.Contracts.Restaurants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -44,14 +46,7 @@ public class RestaurantsController : ControllerBase
 
         var availableUsers = await _context.Users
             .Where(u => u.RestaurantId == null && u.DeletedAt == null)
-            .Select(u => new BasicUserInfo
-            {
-                Id = u.Id,
-                Email = u.Email,
-                Username = u.Username,
-                FirstName = u.FirstName,
-                SecondName = u.SecondName
-            })
+            .Select(u => new BasicUserInfo(u.Id, u.Email, u.Username, u.FirstName, u.SecondName))
             .ToListAsync();
 
         return Ok(availableUsers);
@@ -74,14 +69,7 @@ public class RestaurantsController : ControllerBase
             .Where(u => u.RestaurantId == null && u.DeletedAt == null)
             .Where(u => EF.Functions.ILike(u.Username, $"%{query}%"))
             .OrderBy(u => u.Username)
-            .Select(u => new BasicUserInfo
-            {
-                Id = u.Id,
-                Email = u.Email,
-                Username = u.Username,
-                FirstName = u.FirstName,
-                SecondName = u.SecondName
-            })
+            .Select(u => new BasicUserInfo(u.Id, u.Email, u.Username, u.FirstName, u.SecondName))
             .Take(5)
             .ToListAsync();
 
@@ -224,19 +212,4 @@ public class RestaurantsController : ControllerBase
 
         return Ok(new { user.Id, user.RestaurantId });
     }
-}
-
-public class CreateRestaurantInviteRequest
-{
-    public Guid RestaurantId { get; set; }
-    public Guid UserId { get; set; }
-}
-
-public class BasicUserInfo
-{
-    public Guid Id { get; set; }
-    public string Email { get; set; } = string.Empty;
-    public string Username { get; set; } = string.Empty;
-    public string FirstName { get; set; } = string.Empty;
-    public string SecondName { get; set; } = string.Empty;
 }

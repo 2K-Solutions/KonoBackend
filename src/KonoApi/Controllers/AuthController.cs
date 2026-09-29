@@ -1,6 +1,7 @@
-using Kono.Identity.Domain.Users;
+using Kono.Identity.Domain.Users.Login;
 using Kono.Infrastructure.Persistence;
 using Kono.Infrastructure.Services;
+using KonoApi.Contracts.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +31,7 @@ public class AuthController : ControllerBase
         var result = await _authService.LoginUserAsync(request.Email, request.Password);
         if (!result.Success) return Unauthorized(new { message = result.Message });
 
-        return Ok(result);
+        return Ok(ToTokenResponse(result));
     }
 
     [HttpPost("owner/login")]
@@ -42,7 +43,7 @@ public class AuthController : ControllerBase
         var result = await _authService.LoginOwnerAsync(request.Email, request.Password);
         if (!result.Success) return Unauthorized(new { message = result.Message });
 
-        return Ok(result);
+        return Ok(ToTokenResponse(result));
     }
 
     [HttpPost("register")]
@@ -66,7 +67,7 @@ public class AuthController : ControllerBase
 
         if (!result.Success) return BadRequest(new { message = result.Message });
 
-        return Ok(result);
+        return Ok(ToTokenResponse(result));
     }
 
     [HttpPost("refresh")]
@@ -78,7 +79,7 @@ public class AuthController : ControllerBase
         var result = await _authService.RefreshUserTokenAsync(request.RefreshToken);
         if (!result.Success) return Unauthorized(new { message = result.Message });
 
-        return Ok(result);
+        return Ok(ToTokenResponse(result));
     }
 
     [HttpPost("validate-refresh")]
@@ -126,30 +127,8 @@ public class AuthController : ControllerBase
 
         return Ok(new { message = "Logged out successfully" });
     }
-}
 
-// Request/Response DTOs
-public class LoginRequest
-{
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+    private static TokenResponse ToTokenResponse(LoginResult result) =>
+        new(result.AccessToken ?? string.Empty, result.RefreshToken ?? string.Empty, result.UserId ?? Guid.Empty, result.Message);
 }
-
-public class RefreshTokenRequest
-{
-    public string RefreshToken { get; set; } = string.Empty;
-}
-
-public class RegisterRequest
-{
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string Username { get; set; } = string.Empty;
-    public string FirstName { get; set; } = string.Empty;
-    public string SecondName { get; set; } = string.Empty;
-    public string PhoneNumber { get; set; } = string.Empty;
-    public UserRole? UserRole { get; set; }
-    public string MobilePhoneType { get; set; } = string.Empty;
-}
-
 

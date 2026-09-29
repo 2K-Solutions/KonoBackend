@@ -1,4 +1,4 @@
-namespace Kono.Identity.Domain.Restaurants;
+namespace Kono.Restaurants.Domain;
 
 public class Restaurant
 {

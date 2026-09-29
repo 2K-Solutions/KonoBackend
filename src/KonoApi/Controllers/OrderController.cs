@@ -1,6 +1,7 @@
-using Kono.Identity.Domain.Restaurants;
 using Kono.Orders.Domain;
+using Kono.Restaurants.Domain;
 using Kono.Infrastructure.Persistence;
+using KonoApi.Contracts.Orders;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +34,7 @@ public class OrderController : ControllerBase
 
         var foodItems = await _context.MenuItems
             .Where(m => m.RestaurantId == restaurantId && !m.IsDrink)
+            .Select(m => new MenuItemResponse(m.Id, m.RestaurantId, m.Name))
             .ToListAsync();
 
         return Ok(foodItems);
@@ -51,6 +53,7 @@ public class OrderController : ControllerBase
 
         var drinkItems = await _context.MenuItems
             .Where(m => m.RestaurantId == restaurantId && m.IsDrink)
+            .Select(m => new MenuItemResponse(m.Id, m.RestaurantId, m.Name))
             .ToListAsync();
 
         return Ok(drinkItems);

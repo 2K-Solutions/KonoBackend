@@ -1,6 +1,6 @@
 using Kono.Identity.Domain.Owners;
 
-namespace Kono.Infrastructure.Repositories;
+namespace Kono.Identity.Repositories;
 
 public interface IOwnerRepository
 {

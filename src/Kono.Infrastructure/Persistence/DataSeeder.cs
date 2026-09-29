@@ -1,7 +1,8 @@
 using Kono.Identity.Domain.Owners;
-using Kono.Identity.Domain.Restaurants;
+using Kono.Restaurants.Domain;
 using Kono.Identity.Domain.Users;
 using Microsoft.EntityFrameworkCore;
+using Kono.Orders.Domain;
 
 namespace Kono.Infrastructure.Persistence;
 
