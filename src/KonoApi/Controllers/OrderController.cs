@@ -1,7 +1,7 @@
 using Kono.Orders.Domain;
 using Kono.Restaurants.Domain;
 using Kono.Infrastructure.Persistence;
-using KonoApi.Contracts.Orders;
+using KonoInfrastructure.Contracts.Orders;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

@@ -1,6 +1,6 @@
 using Kono.Identity.Domain.Users;
 
-namespace KonoApi.Contracts.Auth;
+namespace KonoInfrastructure.Contracts.Auth;
 
 public sealed record RegisterRequest(
     string Email,

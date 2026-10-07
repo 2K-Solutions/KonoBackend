@@ -1,11 +1,16 @@
 using Kono.Restaurants.Domain;
 using Kono.Infrastructure.Persistence;
-using KonoApi.Contracts.Auth;
-using KonoApi.Contracts.Restaurants;
+using KonoInfrastructure.Contracts.Auth;
+using KonoInfrastructure.Contracts.Restaurants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Kono.Infrastructure.Repositories.RestaurantRepository;
+using Kono.Restaurants.Repositories;
+using Kono.Infrastructure.Restaurants.Services;
+using Kono.Identity.Repositories;
+using Kono.Infrastructure.Auth.Services;
 
 namespace KonoApi.Controllers;
 
@@ -15,10 +20,19 @@ namespace KonoApi.Controllers;
 public class RestaurantsController : ControllerBase
 {
     private readonly KonoDbContext _context;
+    private readonly IRestaurantRepository _restaurantRepository;
+    private readonly MainRestaurantServices _mainRestaurantServices;
+    private readonly UserServices _userServices;
 
-    public RestaurantsController(KonoDbContext context)
+    public RestaurantsController(KonoDbContext context, 
+                                IRestaurantRepository restaurantRepository, 
+                                MainRestaurantServices mainRestaurantServices, 
+                                UserServices userServices)
     {
         _context = context;
+        _restaurantRepository = restaurantRepository;
+        _mainRestaurantServices = mainRestaurantServices;
+        _userServices = userServices;
     }
 
     [HttpGet("mine")]
@@ -30,10 +44,7 @@ public class RestaurantsController : ControllerBase
         var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
 
-        var restaurants = await _context.Restaurants
-            .Where(r => r.OwnerId == ownerId && r.DeletedAt == null)
-            .Select(r => new { r.Id, r.RestaurantName })
-            .ToListAsync();
+        var restaurants = _mainRestaurantServices.GetRestaurant(ownerId);
 
         return Ok(restaurants);
     }
@@ -44,10 +55,7 @@ public class RestaurantsController : ControllerBase
         var accountType = User.FindFirst("accountType")?.Value;
         if (accountType != "owner") return Forbid();
 
-        var availableUsers = await _context.Users
-            .Where(u => u.RestaurantId == null && u.DeletedAt == null)
-            .Select(u => new BasicUserInfo(u.Id, u.Email, u.Username, u.FirstName, u.SecondName))
-            .ToListAsync();
+        var availableUsers = await _userServices.GetUnemployedUsersAsync();
 
         return Ok(availableUsers);
     }
@@ -87,9 +95,8 @@ public class RestaurantsController : ControllerBase
         var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
 
-        var restaurant = await _context.Restaurants
-            .FirstOrDefaultAsync(r => r.Id == request.RestaurantId && r.OwnerId == ownerId && r.DeletedAt == null);
-        if (restaurant is null) return NotFound(new { message = "Restaurant not found" });
+        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(request.RestaurantId);
+        if (restaurant is null || restaurant.OwnerId != ownerId || restaurant.DeletedAt != null) return Forbid();
 
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Id == request.UserId && u.DeletedAt == null);
