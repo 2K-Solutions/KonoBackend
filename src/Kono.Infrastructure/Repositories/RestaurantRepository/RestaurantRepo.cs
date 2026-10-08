@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Kono.Restaurants.Domain;
 using Kono.Restaurants.Repositories;
 using Kono.Infrastructure.Persistence;
+using Kono.Identity.Domain.Users;
 
 namespace Kono.Infrastructure.Repositories.RestaurantRepository;
 
@@ -56,5 +57,27 @@ public class RestaurantRepo : IRestaurantRepository
             _context.Restaurants.Remove(restaurant);
             await _context.SaveChangesAsync();
         }
+    }
+
+    public async Task<List<User>> GetSomeAvailableUsersAsync()
+    {
+        return await _context.Users
+            .Where(u => u.RestaurantId == null && u.DeletedAt == null)
+            .Take(5)
+            .ToListAsync();
+    }
+
+    public async Task<Guid> GetOwnerIdByRestaurantIdAsync(Guid restaurantId)
+    {
+        var restaurant = await _context.Restaurants
+            .Where(r => r.Id == restaurantId && r.DeletedAt == null)
+            .Select(r => r.OwnerId)
+            .FirstOrDefaultAsync();
+        if (restaurant == Guid.Empty)
+        {
+            throw new InvalidOperationException("Restaurant not found");
+        }
+
+        return restaurant;
     }
 }
