@@ -32,7 +32,7 @@ public class OrderController : ControllerBase
         if (user is null) return Unauthorized();
         if (user.RestaurantId != restaurantId) return Forbid();
 
-        var foodItems = await _context.MenuItems
+        var foodItems = await _context.MenuItem
             .Where(m => m.RestaurantId == restaurantId && !m.IsDrink)
             .Select(m => new MenuItemResponse(m.Id, m.RestaurantId, m.Name))
             .ToListAsync();
@@ -51,7 +51,7 @@ public class OrderController : ControllerBase
         if (user is null) return Unauthorized();
         if (user.RestaurantId != restaurantId) return Forbid();
 
-        var drinkItems = await _context.MenuItems
+        var drinkItems = await _context.MenuItem
             .Where(m => m.RestaurantId == restaurantId && m.IsDrink)
             .Select(m => new MenuItemResponse(m.Id, m.RestaurantId, m.Name))
             .ToListAsync();
