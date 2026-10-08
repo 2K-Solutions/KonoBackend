@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kono.Restaurants", "src\Kon
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kono.Orders", "src\Kono.Orders\Kono.Orders.csproj", "{02BA93B1-FD4F-426E-B308-59A6B54C8021}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kono.Menu", "src\Kono.Menu\Kono.Menu.csproj", "{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,18 @@ Global
 		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Release|x64.Build.0 = Release|Any CPU
 		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Release|x86.ActiveCfg = Release|Any CPU
 		{02BA93B1-FD4F-426E-B308-59A6B54C8021}.Release|x86.Build.0 = Release|Any CPU
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}.Debug|x64.Build.0 = Debug|Any CPU
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}.Debug|x86.Build.0 = Debug|Any CPU
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}.Release|x64.ActiveCfg = Release|Any CPU
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}.Release|x64.Build.0 = Release|Any CPU
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}.Release|x86.ActiveCfg = Release|Any CPU
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -92,5 +106,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{680A4DC0-90EF-4413-BA0E-8DCEAAD5EB65} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{02BA93B1-FD4F-426E-B308-59A6B54C8021} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{5A99F7F2-CDDB-4B60-9AFD-7240CFFBBC20} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

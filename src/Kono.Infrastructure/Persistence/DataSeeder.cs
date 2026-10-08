@@ -3,6 +3,7 @@ using Kono.Restaurants.Domain;
 using Kono.Identity.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Kono.Orders.Domain;
+using Kono.Menu.Domain;
 
 namespace Kono.Infrastructure.Persistence;
 
@@ -83,7 +84,7 @@ public static class DataSeeder
                 });
 
         }
-        if(!await context.MenuItems.AnyAsync())
+        if(!await context.MenuItem.AnyAsync())
         {
             var menuRestaurantId = await context.Restaurants
                 .Where(r => r.RestaurantName == "Kono Rijeka")
@@ -92,11 +93,12 @@ public static class DataSeeder
 
             if (menuRestaurantId != Guid.Empty)
             {
-                context.MenuItems.AddRange(
+                context.MenuItem.AddRange(
                     new MenuItem
                     {
                         Id = Guid.NewGuid(),
                         RestaurantId = menuRestaurantId,
+                        Price = 10.99m,
                         IsDrink = false,
                         Name = "Margherita"
                     },
@@ -104,6 +106,7 @@ public static class DataSeeder
                     {
                         Id = Guid.NewGuid(),
                         RestaurantId = menuRestaurantId,
+                        Price = 12.00m,
                         IsDrink = false,
                         Name = "Cevapi"
                     },
@@ -111,6 +114,7 @@ public static class DataSeeder
                     {
                         Id = Guid.NewGuid(),
                         RestaurantId = menuRestaurantId,
+                        Price = 2.50m,
                         IsDrink = true,
                         Name = "Coca Cola"
                     }

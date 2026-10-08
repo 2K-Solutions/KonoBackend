@@ -1,4 +1,4 @@
-namespace KonoApi.Contracts.Auth;
+namespace KonoInfrastructure.Contracts.Auth;
 
 public sealed record LoginRequest(string Email, string Password);
 

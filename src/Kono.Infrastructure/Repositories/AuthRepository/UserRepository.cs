@@ -27,4 +27,11 @@ public class UserRepository : IUserRepository
         => _context.Users.AnyAsync(u => u.Email == email && u.DeletedAt == null);
 
     public Task SaveChangesAsync() => _context.SaveChangesAsync();
+
+    public async Task<List<User>> GetUnemployedUsersAsync()
+    {
+        return await _context.Users
+            .Where(u => u.RestaurantId == null && u.DeletedAt == null)
+            .ToListAsync();
+    }
 }

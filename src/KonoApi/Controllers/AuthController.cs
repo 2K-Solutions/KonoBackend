@@ -1,7 +1,7 @@
 using Kono.Identity.Domain.Users.Login;
 using Kono.Infrastructure.Persistence;
-using Kono.Infrastructure.Services;
-using KonoApi.Contracts.Auth;
+using Kono.Infrastructure.Auth.Services;
+using KonoInfrastructure.Contracts.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -51,6 +51,10 @@ public class AuthController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
             return BadRequest(new { message = "Email and password are required" });
+
+        if(request.Password.Length < 8){
+            return BadRequest(new { message = "Password must be at least 8 characters long" });
+        }
 
         if (string.IsNullOrWhiteSpace(request.Username))
             return BadRequest(new { message = "Username is required" });

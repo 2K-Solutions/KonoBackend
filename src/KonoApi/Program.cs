@@ -1,7 +1,10 @@
 using Kono.Infrastructure.Persistence;
-using Kono.Infrastructure.Services;
+using Kono.Infrastructure.Auth.Services;
+using Kono.Infrastructure.Restaurants.Services;
 using Kono.Infrastructure.Auth.Repositories;
+using Kono.Infrastructure.Repositories.RestaurantRepository;
 using Kono.Identity.Repositories;
+using Kono.Restaurants.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -81,6 +84,7 @@ builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IOwnerRepository, OwnerRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IRestaurantRepository, RestaurantRepo>();
 builder.Services.AddHostedService<RestaurantInviteCleanupService>();
 builder.Services.AddControllers();
 

@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Kono.Infrastructure.Services;
+namespace Kono.Infrastructure.Auth.Services;
 
 public interface IJwtTokenService
 {

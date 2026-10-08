@@ -5,7 +5,7 @@ using Kono.Identity.Domain.Users.Login;
 using Kono.Identity.Domain.RefreshTokens;
 using Microsoft.EntityFrameworkCore;
 
-namespace Kono.Infrastructure.Services;
+namespace Kono.Infrastructure.Auth.Services;
 
 public interface IAuthenticationService
 {
