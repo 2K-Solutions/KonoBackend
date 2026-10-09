@@ -166,6 +166,26 @@ public class RestaurantsController : ControllerBase
         };
     }
 
+    [HttpPatch("invite/{inviteId:guid}/decline")]
+    public async Task<IActionResult> DeclineInvite(Guid inviteId)
+    {
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "worker") return Forbid();
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
+
+        var result = await _mainRestaurantServices.DeclineInvite(inviteId, userId);
+
+        return result.Error switch
+        {
+            MembershipError.None => Ok(result.Response),
+            MembershipError.NotFound => NotFound(new { message = result.Message }),
+            MembershipError.Forbidden => Forbid(),
+            _ => BadRequest(new { message = result.Message })
+        };
+    }
+
     [HttpPatch("kick/{userId:guid}")]
     public async Task<IActionResult> KickUser(Guid userId)
     {
@@ -184,5 +204,19 @@ public class RestaurantsController : ControllerBase
             MembershipError.Forbidden => Forbid(),
             _ => BadRequest(new { message = result.Message })
         };
+    }
+
+    [HttpGet("{restaurantId:guid}/get-my-workers")]
+    public async Task<IActionResult> GetMyWorkers(Guid restaurantId)
+    {
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "owner") return Forbid();
+
+        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
+
+        var workers = await _mainRestaurantServices.GetRestaurantUsers(restaurantId, ownerId);
+
+        return Ok(workers);
     }
 }

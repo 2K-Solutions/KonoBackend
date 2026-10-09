@@ -156,6 +156,31 @@ public class MainRestaurantServices
         return MembershipResult.Ok(user.Id, user.RestaurantId);
     }
 
+    public async Task<MembershipResult> DeclineInvite(Guid inviteId, Guid userId)
+    {
+        var invite = await _context.RestaurantInvites
+            .FirstOrDefaultAsync(i => i.Id == inviteId && i.UserId == userId);
+        if (invite is null) return MembershipResult.Fail(MembershipError.NotFound, "Invite not found");
+
+        if (invite.Status != RestaurantInviteStatus.Pending)
+            return MembershipResult.Fail(MembershipError.BadRequest, "Invite is no longer pending");
+
+        var now = DateTime.UtcNow;
+        if (invite.ExpiresAt <= now)
+        {
+            invite.Status = RestaurantInviteStatus.Expired;
+            await _context.SaveChangesAsync();
+            return MembershipResult.Fail(MembershipError.BadRequest, "Invite has expired");
+        }
+
+        invite.Status = RestaurantInviteStatus.Declined;
+        invite.RespondedAt = now;
+
+        await _context.SaveChangesAsync();
+
+        return MembershipResult.Ok(invite.Id, invite.RestaurantId);
+    }
+
     public async Task<MembershipResult> KickUser(Guid userId, Guid ownerId)
     {
         var user = await _userRepository.GetByIdAsync(userId);
@@ -170,5 +195,14 @@ public class MainRestaurantServices
         await _userRepository.SaveChangesAsync();
 
         return MembershipResult.Ok(user.Id, user.RestaurantId);
+    }
+
+    public async Task<List<BasicUserInfo>> GetRestaurantUsers(Guid restaurantId, Guid ownerId)
+    {
+        var users = await _restaurantRepository.GetRestaurantUsersByRestaurantandOwnerIdAsync(restaurantId, ownerId);
+
+        return users
+            .Select(u => new BasicUserInfo(u.Id, u.Email, u.Username, u.FirstName, u.SecondName))
+            .ToList();
     }
 }

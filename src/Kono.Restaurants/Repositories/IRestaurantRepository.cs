@@ -13,4 +13,5 @@ public interface IRestaurantRepository
     Task<List<Restaurant>> GetRestaurantsByOwnerIdAsync(Guid ownerId);
     Task<List<User>> GetSomeAvailableUsersAsync();
     Task<Guid> GetOwnerIdByRestaurantIdAsync(Guid restaurantId);
+    Task<List<User>> GetRestaurantUsersByRestaurantandOwnerIdAsync(Guid restaurantId, Guid ownerId);
 }
