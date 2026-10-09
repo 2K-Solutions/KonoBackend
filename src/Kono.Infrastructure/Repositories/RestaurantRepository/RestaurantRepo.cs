@@ -80,4 +80,14 @@ public class RestaurantRepo : IRestaurantRepository
 
         return restaurant;
     }
+    
+    public async Task<List<User>> GetRestaurantUsersByRestaurantandOwnerIdAsync(Guid restaurantId, Guid ownerId)
+    {
+            return await _context.Users
+            .Where(u => u.RestaurantId == restaurantId && u.DeletedAt == null)
+            .Join(_context.Restaurants, u => u.RestaurantId, r => r.Id, (u, r) => new { User = u, Restaurant = r })
+            .Where(ur => ur.Restaurant.OwnerId == ownerId)
+            .Select(ur => ur.User)
+            .ToListAsync();
+    }
 }

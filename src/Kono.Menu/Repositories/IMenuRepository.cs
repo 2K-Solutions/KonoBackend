@@ -9,5 +9,7 @@ public interface IMenuRepository
     Task AddMenuItemAsync(MenuItem menuItem);
     Task UpdateMenuItemAsync(MenuItem menuItem);
     Task DeleteMenuItemAsync(Guid menuItemId);
+    Task<List<MenuItem>> GetFoodItemsByRestaurantIdAsync(Guid restaurantId);
+    Task<List<MenuItem>> GetDrinkItemsByRestaurantIdAsync(Guid restaurantId);
 
 }

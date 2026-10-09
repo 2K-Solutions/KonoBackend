@@ -21,6 +21,9 @@ public class KonoDbContext : DbContext
     public DbSet<MenuItem> MenuItem => Set<MenuItem>();
     public DbSet<CurrentOrders> CurrentOrders => Set<CurrentOrders>();
     public DbSet<OrderInfo> OrderInfo => Set<OrderInfo>();
+    public DbSet<FoodStatistics> FoodStatistics => Set<FoodStatistics>();
+    public DbSet<DrinkStatistics> DrinkStatistics => Set<DrinkStatistics>();
+    public DbSet<Tables> Tables => Set<Tables>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -268,6 +271,68 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.Quantity)
                 .HasColumnType("integer")
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<FoodStatistics>(entity =>
+        {
+            entity.ToTable("FoodStatistics");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.MenuItemId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.StatDate)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.Property(e => e.TotalOrders)
+                .HasColumnType("integer")
+                .IsRequired();
+
+            entity.Property(e => e.TotalRevenue)
+                .HasColumnType("decimal(18,2)")
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<DrinkStatistics>(entity =>
+        {
+            entity.ToTable("DrinkStatistics");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.MenuItemId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.StatDate)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.Property(e => e.TotalOrders)
+                .HasColumnType("integer")
+                .IsRequired();
+
+            entity.Property(e => e.TotalRevenue)
+                .HasColumnType("decimal(18,2)")
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<Tables>(entity =>
+        {
+            entity.ToTable("Tables");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.RestaurantId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.TableNumber)
+                .HasColumnType("smallint")
+                .IsRequired();
+
+            entity.Property(e => e.TableState)
+                .HasColumnType("smallint")
                 .IsRequired();
         });
      }

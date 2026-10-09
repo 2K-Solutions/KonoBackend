@@ -2,8 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Kono.Menu.Domain;
 using Kono.Menu.Repositories;
 using Kono.Infrastructure.Persistence;
+using Kono.Infrastructure.Contracts.MenuItems; 
 
-namespace Kono.Infrastructure.Repositories.MenuRepository;
+namespace Kono.Menu.Repositories;
 
 public class MenuRepository : IMenuRepository
 {
@@ -44,5 +45,19 @@ public class MenuRepository : IMenuRepository
             _context.MenuItem.Remove(menuItem);
             await _context.SaveChangesAsync();
         }
+    }
+
+    public async Task<List<MenuItem>> GetFoodItemsByRestaurantIdAsync(Guid restaurantId)
+    {
+        return await _context.MenuItem
+            .Where(mi => mi.RestaurantId == restaurantId && !mi.IsDrink)
+            .ToListAsync();
+    }
+
+    public async Task<List<MenuItem>> GetDrinkItemsByRestaurantIdAsync(Guid restaurantId)
+    {
+        return await _context.MenuItem
+            .Where(mi => mi.RestaurantId == restaurantId && mi.IsDrink)
+            .ToListAsync();
     }
 }
