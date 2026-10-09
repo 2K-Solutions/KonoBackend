@@ -171,26 +171,4 @@ public class MainRestaurantServices
 
         return MembershipResult.Ok(user.Id, user.RestaurantId);
     }
-
-    public async Task<MenuItemCreatedResponse> AddFoodItem(Guid restaurantId, CreateMenuItemRequest request)
-    {
-        var existingItem = await _context.MenuItem.FirstOrDefaultAsync(mi => mi.RestaurantId == restaurantId && mi.Name == request.Name);
-        if(existingItem != null && existingItem.Name.Equals(request.Name, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException("A menu item with the same name already exists for this restaurant.");
-        }
-        var menuItem = new MenuItem
-        {
-            Id = Guid.NewGuid(),
-            RestaurantId = restaurantId,
-            Name = request.Name,
-            Price = request.Price,
-            IsDrink = request.IsDrink
-        };
-
-        _context.MenuItem.Add(menuItem);
-        await _context.SaveChangesAsync();
-
-        return new MenuItemCreatedResponse(menuItem.Id, menuItem.RestaurantId, menuItem.Name, menuItem.Price, menuItem.IsDrink, "Menu item created successfully");
-    }
 }

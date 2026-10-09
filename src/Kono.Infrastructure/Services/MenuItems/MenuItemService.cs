@@ -20,24 +20,48 @@ public class MenuItemService
         _menuRepository = menuRepository;
     }
 
-    public async Task AddMenuItemAsync(MenuItem menuItem)
+    public async Task AddMenuItemAsync(Guid restaurantId, CreateMenuItemRequest menuItem)
     {
-        var restaurant = await _context.Restaurants.FindAsync(menuItem.RestaurantId);
+        
+        var restaurant = await _context.Restaurants.FindAsync(restaurantId);
         if(restaurant == null)
         {
-            throw new ArgumentException($"Restaurant with ID {menuItem.RestaurantId} does not exist.");
+            throw new ArgumentException($"Restaurant with ID {restaurantId} does not exist.");
         }
-        var existingMenuItem = await _context.MenuItem.FirstOrDefaultAsync(mi => restaurant.Id == mi.RestaurantId && mi.Name == menuItem.Name);
+        var existingMenuItem = await _context.MenuItem.FirstOrDefaultAsync(mi => restaurantId == mi.RestaurantId && mi.Name == menuItem.Name);
         if(existingMenuItem != null)
         {
             throw new ArgumentException($"Menu item with name {menuItem.Name} already exists for this restaurant.");
         }
-        await _menuRepository.AddMenuItemAsync(menuItem);
+        var newitem = new MenuItem
+        {
+            Id = Guid.NewGuid(),
+            RestaurantId = restaurantId,
+            Name = menuItem.Name,
+            Price = menuItem.Price,
+            IsDrink = menuItem.IsDrink
+        };
+
+        await _menuRepository.AddMenuItemAsync(newitem);
     }
 
     public async Task<FoodQuantityResponse> GetFoodQuantitySoldAsync(Guid menuItemId, DateTime startDate, DateTime endDate)
     {
         var foodStatistics = await _foodStatsRepository.GetFoodStatisticsAsync(menuItemId, startDate, endDate);
+        if(foodStatistics == null || !foodStatistics.Any())
+        {
+            return new FoodQuantityResponse(menuItemId, 0, 0);
+        }
+
+        int totalQuantitySold = foodStatistics.Sum(fs => fs.TotalOrders);
+        decimal totalRevenue = foodStatistics.Sum(fs => fs.TotalRevenue);
+
+        return new FoodQuantityResponse(menuItemId, totalQuantitySold, totalRevenue);
+    }
+
+    public async Task<FoodQuantityResponse> GetDrinkQuantitySoldAsync(Guid menuItemId, DateTime startDate, DateTime endDate)
+    {
+        var foodStatistics = await _foodStatsRepository.GetDrinkStatisticsAsync(menuItemId, startDate, endDate);
         if(foodStatistics == null || !foodStatistics.Any())
         {
             return new FoodQuantityResponse(menuItemId, 0, 0);

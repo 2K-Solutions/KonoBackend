@@ -40,4 +40,23 @@ public class FoodStatsRepository : IFoodStatsRepository
             .OrderBy(ds => ds.StatDate)
             .ToListAsync();
     }
+
+    public async Task<List<FoodStatistics>> GetAllFoodStatisticsAsync(Guid restaurantId)
+    {
+        return await _context.FoodStatistics
+            .Join(_context.MenuItem, fs => fs.MenuItemId, mi => mi.Id, (fs, mi) => new { Stat = fs, mi.RestaurantId })
+            .Where(x => x.RestaurantId == restaurantId)
+            .Select(x => x.Stat)
+            .OrderBy(fs => fs.StatDate)
+            .ToListAsync();
+    }
+    public async Task<List<DrinkStatistics>> GetAllDrinkStatisticsAsync(Guid restaurantId)
+    {
+        return await _context.DrinkStatistics
+            .Join(_context.MenuItem, fs => fs.MenuItemId, mi => mi.Id, (fs, mi) => new { Stat = fs, mi.RestaurantId })
+            .Where(x => x.RestaurantId == restaurantId)
+            .Select(x => x.Stat)
+            .OrderBy(fs => fs.StatDate)
+            .ToListAsync();
+    }
 }

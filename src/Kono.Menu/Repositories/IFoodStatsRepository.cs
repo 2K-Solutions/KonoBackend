@@ -8,5 +8,5 @@ public interface IFoodStatsRepository
     Task AddDrinkStatisticsAsync(DrinkStatistics drink);
     Task<List<FoodStatistics>> GetFoodStatisticsAsync(Guid menuItemId, DateTime startDate, DateTime endDate);
     Task<List<DrinkStatistics>> GetDrinkStatisticsAsync(Guid menuItemId, DateTime startDate, DateTime endDate);
-    
+    Task<List<FoodStatistics>> GetAllFoodStatisticsAsync(Guid restaurantId);
 }

@@ -185,24 +185,4 @@ public class RestaurantsController : ControllerBase
             _ => BadRequest(new { message = result.Message })
         };
     }
-
-    [HttpPost("{restaurantId:guid}/add-food-item")]
-    public async Task<IActionResult> AddFoodItem(Guid restaurantId, [FromBody] CreateMenuItemRequest request)
-    {
-        var accountType = User.FindFirst("accountType")?.Value;
-        if (accountType != "owner") return Forbid();
-
-        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
-
-        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
-        if (restaurant == null || restaurant.OwnerId != ownerId)
-        {
-            return Forbid();
-        }
-
-        var response = await _mainRestaurantServices.AddFoodItem(restaurantId, request);
-
-        return Ok(response);
-    }
 }
