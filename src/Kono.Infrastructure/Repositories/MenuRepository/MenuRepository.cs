@@ -3,7 +3,7 @@ using Kono.Menu.Domain;
 using Kono.Menu.Repositories;
 using Kono.Infrastructure.Persistence;
 
-namespace Kono.Infrastructure.Repositories.MenuRepository;
+namespace Kono.Menu.Repositories;
 
 public class MenuRepository : IMenuRepository
 {
