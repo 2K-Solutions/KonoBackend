@@ -30,12 +30,17 @@ public class JwtTokenService : IJwtTokenService
             Encoding.UTF8.GetBytes(_configuration["Jwt:SigningKey"] ?? throw new InvalidOperationException("JWT SigningKey not configured")));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Email, email),
             new Claim("accountType", accountType)
         };
+
+        if (accountType == "owner" && IsAdminEmail(email))
+        {
+            claims.Add(new Claim("isAdmin", "true"));
+        }
 
         var token = new JwtSecurityToken(
             issuer: _configuration["Jwt:Issuer"],
@@ -45,6 +50,15 @@ public class JwtTokenService : IJwtTokenService
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private bool IsAdminEmail(string email)
+    {
+        var adminEmails = _configuration.GetSection("Admin:Emails").GetChildren()
+            .Select(c => c.Value)
+            .Where(v => !string.IsNullOrWhiteSpace(v));
+
+        return adminEmails.Any(e => string.Equals(e!.Trim(), email.Trim(), StringComparison.OrdinalIgnoreCase));
     }
 
     public string GenerateRefreshToken()

@@ -267,7 +267,7 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.ItemDescription)
                 .HasColumnType("varchar(256)")
-                .IsRequired();
+                .IsRequired(); //remove
 
             entity.Property(e => e.Quantity)
                 .HasColumnType("integer")
@@ -289,11 +289,11 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.TotalOrders)
                 .HasColumnType("integer")
-                .IsRequired();
+                .IsRequired(); //remove
 
             entity.Property(e => e.TotalRevenue)
                 .HasColumnType("decimal(18,2)")
-                .IsRequired();
+                .IsRequired(); //remove
         });
 
         modelBuilder.Entity<DrinkStatistics>(entity =>
@@ -307,15 +307,15 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.StatDate)
                 .HasColumnType("timestamp with time zone")
-                .IsRequired();
+                .IsRequired(); 
 
             entity.Property(e => e.TotalOrders)
                 .HasColumnType("integer")
-                .IsRequired();
+                .IsRequired();  //remove
 
             entity.Property(e => e.TotalRevenue)
                 .HasColumnType("decimal(18,2)")
-                .IsRequired();
+                .IsRequired();  //remove
         });
 
         modelBuilder.Entity<Tables>(entity =>
@@ -333,7 +333,7 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.TableState)
                 .HasColumnType("smallint")
-                .IsRequired();
+                .IsRequired();   //remove
         });
      }
  }
