@@ -1,11 +1,12 @@
 using Kono.Orders.Domain;
 using Kono.Restaurants.Domain;
 using Kono.Infrastructure.Persistence;
-using KonoInfrastructure.Contracts.Orders;
+using Kono.Infrastructure.Contracts.Orders;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Kono.Infrastructure.Services.Orders;
 
 namespace KonoApi.Controllers;
 
@@ -15,47 +16,31 @@ namespace KonoApi.Controllers;
 public class OrderController : ControllerBase
 {
     private readonly KonoDbContext _context;
+    private readonly MainOrderService _mainOrderService;
 
-    public OrderController(KonoDbContext context)
+    public OrderController(KonoDbContext context, MainOrderService mainOrderService)
     {
         _context = context;
+        _mainOrderService = mainOrderService;
     }
 
-    [HttpGet("food/{restaurantId:guid}")]
-    [Authorize]
-    public async Task<IActionResult> GetFoodItems(Guid restaurantId)
+    [HttpPost("{userId}/create-order")]
+    public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
     {
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "worker") return Forbid();
+
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId && u.DeletedAt == null);
-        if (user is null) return Unauthorized();
-        if (user.RestaurantId != restaurantId) return Forbid();
+        if(await _mainOrderService.CheckUserCredibility(request.RestaurantId, userId) == false)
+            return Forbid();
 
-        var foodItems = await _context.MenuItem
-            .Where(m => m.RestaurantId == restaurantId && !m.IsDrink)
-            .Select(m => new MenuItemResponse(m.Id, m.RestaurantId, m.Name))
-            .ToListAsync();
+        var result = await _mainOrderService.CreateOrderAsync(request, userId);
 
-        return Ok(foodItems);
-    }
+        if (result.error != ResponseError.None)
+            return BadRequest(result.message);
 
-    [HttpGet("drinks/{restaurantId:guid}")]
-    [Authorize]
-    public async Task<IActionResult> GetDrinkItems(Guid restaurantId)
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
-
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId && u.DeletedAt == null);
-        if (user is null) return Unauthorized();
-        if (user.RestaurantId != restaurantId) return Forbid();
-
-        var drinkItems = await _context.MenuItem
-            .Where(m => m.RestaurantId == restaurantId && m.IsDrink)
-            .Select(m => new MenuItemResponse(m.Id, m.RestaurantId, m.Name))
-            .ToListAsync();
-
-        return Ok(drinkItems);
+        return Ok(result.message);
     }
 }

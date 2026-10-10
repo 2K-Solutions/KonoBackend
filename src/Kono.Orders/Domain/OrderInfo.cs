@@ -1,6 +1,6 @@
 namespace Kono.Orders.Domain;
 
-public class OrderInfo
+public class OrderItem
 {
     public Guid Id { get; set; }
     public Guid OrderId { get; set; }

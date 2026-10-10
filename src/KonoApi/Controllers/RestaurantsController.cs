@@ -1,18 +1,15 @@
 using Kono.Restaurants.Domain;
 using Kono.Infrastructure.Persistence;
-using KonoInfrastructure.Contracts.Auth;
 using KonoInfrastructure.Contracts.Restaurants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using Kono.Infrastructure.Repositories.RestaurantRepository;
 using Kono.Restaurants.Repositories;
 using Kono.Infrastructure.Restaurants.Services;
-using Kono.Identity.Repositories;
 using Kono.Infrastructure.Auth.Services;
-using Kono.Infrastructure.Contracts.MenuItems;
-using Kono.Menu.Domain;
+using Kono.Infrastructure.Contracts.Restaurants;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace KonoApi.Controllers;
 
@@ -23,6 +20,7 @@ public class RestaurantsController : ControllerBase
 {
     private readonly KonoDbContext _context;
     private readonly IRestaurantRepository _restaurantRepository;
+    private readonly ITableRepository _tableRepository;
     private readonly MainRestaurantServices _mainRestaurantServices;
     private readonly UserServices _userServices;
 
@@ -31,13 +29,34 @@ public class RestaurantsController : ControllerBase
 
     public RestaurantsController(KonoDbContext context, 
                                 IRestaurantRepository restaurantRepository, 
+                                ITableRepository tableRepository,
                                 MainRestaurantServices mainRestaurantServices, 
                                 UserServices userServices)
     {
         _context = context;
         _restaurantRepository = restaurantRepository;
+        _tableRepository = tableRepository;
         _mainRestaurantServices = mainRestaurantServices;
         _userServices = userServices;
+    }
+
+    [HttpPost("create")]
+    public async Task<IActionResult> CreateRestaurant([FromBody] CreateRestaurantRequest request)
+    {
+        var isAdmin = User.FindFirst("isAdmin")?.Value;
+        if (isAdmin != "true") return Forbid();
+
+        if (string.IsNullOrWhiteSpace(request.RestaurantName) ||
+            string.IsNullOrWhiteSpace(request.City) ||
+            string.IsNullOrWhiteSpace(request.Address))
+        {
+            return BadRequest(new { message = "Restaurant name, city and address are required" });
+        }
+
+        var restaurant = await _mainRestaurantServices.CreateRestaurant(request);
+        if (restaurant is null) return NotFound(new { message = "Owner not found" });
+
+        return Ok(restaurant);
     }
 
     [HttpGet("mine")]
@@ -65,7 +84,7 @@ public class RestaurantsController : ControllerBase
         return Ok(availableUsers);
     }
 
-    [HttpGet("available-users/search")]
+    [HttpGet("available-users/search")] //Retrieves a list of 5 users with no restaurantId
     public async Task<IActionResult> SearchAvailableUsers([FromQuery] string query)
     {
         var accountType = User.FindFirst("accountType")?.Value;
@@ -218,5 +237,47 @@ public class RestaurantsController : ControllerBase
         var workers = await _mainRestaurantServices.GetRestaurantUsers(restaurantId, ownerId);
 
         return Ok(workers);
+    }
+
+    [HttpPost("{restaurantId:guid}/tables/add-table")]
+    public async Task<IActionResult> AddTable(Guid restaurantId, [FromBody] AddTableRequest request)
+    {
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "owner") return Forbid();
+
+        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
+
+        var table = await _mainRestaurantServices.AddTable(restaurantId, request, ownerId);
+
+        return Ok(table);
+    }
+
+    [HttpPatch("{restaurantId:guid}/tables/{tableId:guid}/edit-table")]
+    public async Task<IActionResult> EditTable(Guid restaurantId, Guid tableId, [FromBody] EditTableRequest request)
+    {
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "owner") return Forbid();
+
+        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
+
+        var table = await _mainRestaurantServices.EditTableNumber(restaurantId, tableId, request, ownerId);
+
+        return Ok(table);
+    }
+
+    [HttpGet("{restaurantId:guid}/tables")]
+    public async Task<IActionResult> GetTables(Guid restaurantId)
+    {
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "owner") return Forbid();
+
+        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
+
+        var tables = await _mainRestaurantServices.GetTables(restaurantId, ownerId);
+
+        return Ok(tables);
     }
 }

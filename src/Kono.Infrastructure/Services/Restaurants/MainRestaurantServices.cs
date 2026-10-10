@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Kono.Infrastructure.Contracts.MenuItems;
 using Kono.Menu.Domain;
+using Kono.Infrastructure.Contracts.Restaurants;
 
 
 
@@ -18,22 +19,47 @@ public class MainRestaurantServices
 {
     private readonly KonoDbContext _context;
     private readonly IRestaurantRepository _restaurantRepository;
+    private readonly ITableRepository _tableRepository;
     private readonly IOwnerRepository _ownerRepository;
     private readonly IUserRepository _userRepository;
 
     public MainRestaurantServices(KonoDbContext context,
         IRestaurantRepository restaurantRepository,
+        ITableRepository tableRepository,
         IOwnerRepository ownerRepository,
         IUserRepository userRepository)
     {
         _context = context;
         _restaurantRepository = restaurantRepository;
+        _tableRepository = tableRepository;
         _ownerRepository = ownerRepository;
         _userRepository = userRepository;
     }
 
     
+    // Create a new restaurant by admin, Returns: Basic rest. info
+    public async Task<RestaurantBasic?> CreateRestaurant(CreateRestaurantRequest request)
+    {
+        var owner = await _ownerRepository.GetByIdAsync(request.OwnerId);
+        if (owner is null) return null;
 
+        var restaurant = new Restaurant
+        {
+            Id = Guid.NewGuid(),
+            OwnerId = owner.Id,
+            RestaurantName = request.RestaurantName.Trim(),
+            City = request.City.Trim(),
+            Address = request.Address.Trim(),
+            IsActive = true,
+            CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
+        };
+
+        await _restaurantRepository.AddRestaurantAsync(restaurant);
+
+        return new RestaurantBasic(restaurant.Id, restaurant.RestaurantName, restaurant.City, restaurant.Address);
+    }
+
+    // Gets restaurant by ownerId, Returns: List of restaurants with basic info
     public async Task<List<RestaurantBasic>> GetRestaurant(Guid ownerId)
     {
         var restaurants = await _restaurantRepository.GetRestaurantsByOwnerIdAsync(ownerId);
@@ -43,6 +69,7 @@ public class MainRestaurantServices
             .ToList();
     }
 
+    // Fetches 5 users that dont have restaurantId, Returns: List of 5 basic user info
     public async Task<List<BasicUserInfo>> GetSomeAvailableUsersAsync([FromQuery] string query)
     {
         var availableUsers = await _restaurantRepository.GetSomeAvailableUsersAsync();
@@ -54,6 +81,7 @@ public class MainRestaurantServices
             .ToList();
     }
 
+    // Checks if a user is eligible for an invite to a restaurant, Returns: InviteResult with success flags and message
     public async Task<InviteResult> CheckUserInvites(Guid userId, Guid restaurantId)
     {
         var ownerId = await _restaurantRepository.GetOwnerIdByRestaurantIdAsync(restaurantId);
@@ -79,6 +107,7 @@ public class MainRestaurantServices
         return new InviteResult { Message = "User is eligible for an invite" };
     }
 
+    // Generates a new invite for a user to join a restaurant, Returns: The created RestaurantInvite
     public async Task<RestaurantInvite> GenerateInvite(TimeSpan LifeTime, Guid userId, Guid restaurantId)
     {
         var now = DateTime.UtcNow;
@@ -98,6 +127,7 @@ public class MainRestaurantServices
         return invite;
     }
 
+    // Retrieves pending invites from owner for the user(worker), Returns: List of PendingInviteResponse
     public async Task<List<PendingInviteResponse>> GetPendingInvitesForUser(Guid userId)
     {
         var now = DateTime.UtcNow;
@@ -111,6 +141,7 @@ public class MainRestaurantServices
         return invites;
     }
 
+    // Retrieves pending invites that owner sent, Returns: List of PendingInviteResponse
     public async Task<List<PendingInviteResponse>> GetPendingInvitesForOwner(Guid ownerId, Guid restaurantId)
     {
         var now = DateTime.UtcNow;
@@ -126,6 +157,7 @@ public class MainRestaurantServices
         return invites;
     }
 
+    // Accepts an invite for a user to join a restaurant, Returns: MembershipResult with success flags and message
     public async Task<MembershipResult> AcceptInvite(Guid inviteId, Guid userId)
     {
         var invite = await _context.RestaurantInvites
@@ -156,6 +188,7 @@ public class MainRestaurantServices
         return MembershipResult.Ok(user.Id, user.RestaurantId);
     }
 
+    // Declines an invite for a user to join a restaurant, Returns: MembershipResult with success flags and message
     public async Task<MembershipResult> DeclineInvite(Guid inviteId, Guid userId)
     {
         var invite = await _context.RestaurantInvites
@@ -181,6 +214,7 @@ public class MainRestaurantServices
         return MembershipResult.Ok(invite.Id, invite.RestaurantId);
     }
 
+    // Enables Owner to kick a user from their restaurant, Returns: MembershipResult with success flags and message
     public async Task<MembershipResult> KickUser(Guid userId, Guid ownerId)
     {
         var user = await _userRepository.GetByIdAsync(userId);
@@ -197,6 +231,7 @@ public class MainRestaurantServices
         return MembershipResult.Ok(user.Id, user.RestaurantId);
     }
 
+    // Retrieves users of a restaurant for the owner, Returns: List of BasicUserInfo
     public async Task<List<BasicUserInfo>> GetRestaurantUsers(Guid restaurantId, Guid ownerId)
     {
         var users = await _restaurantRepository.GetRestaurantUsersByRestaurantandOwnerIdAsync(restaurantId, ownerId);
@@ -204,5 +239,60 @@ public class MainRestaurantServices
         return users
             .Select(u => new BasicUserInfo(u.Id, u.Email, u.Username, u.FirstName, u.SecondName))
             .ToList();
+    }
+
+    public async Task<Tables> AddTable(Guid restaurantId, AddTableRequest request, Guid ownerId)
+    {
+        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
+        if (restaurant is null || restaurant.OwnerId != ownerId)
+        {
+            throw new UnauthorizedAccessException("You do not own this restaurant.");
+        }
+
+        var table = new Tables
+        {
+            Id = Guid.NewGuid(),
+            RestaurantId = restaurantId,
+            TableNumber = request.TableNumber,
+        };
+
+        await _tableRepository.AddTableAsync(table);
+        await _context.SaveChangesAsync();
+
+        return table;
+    }
+
+    public async Task<Tables> EditTableNumber(Guid restaurantId, Guid tableId, EditTableRequest request, Guid ownerId)
+    {
+        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
+        if (restaurant is null || restaurant.OwnerId != ownerId)
+        {
+            throw new UnauthorizedAccessException("You do not own this restaurant.");
+        }
+
+        var table = await _tableRepository.GetTableByIdAsync(tableId);
+        if (table is null || table.RestaurantId != restaurantId)
+        {
+            throw new KeyNotFoundException("Table not found in this restaurant.");
+        }
+
+        table.TableNumber = request.TableNumber;
+
+        await _tableRepository.UpdateTableAsync(table);
+        await _context.SaveChangesAsync();
+
+        return table;
+    }
+
+    public async Task<List<Tables>> GetTables(Guid restaurantId, Guid ownerId)
+    {
+        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
+        if (restaurant is null || restaurant.OwnerId != ownerId)
+        {
+            throw new UnauthorizedAccessException("You do not own this restaurant.");
+        }
+
+        var tables = await _tableRepository.GetTablesByRestaurantIdAsync(restaurantId);
+        return tables;
     }
 }
