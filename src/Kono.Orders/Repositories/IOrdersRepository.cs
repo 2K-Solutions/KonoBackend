@@ -6,7 +6,7 @@ namespace Kono.Orders.Repositories;
         Task<List<CurrentOrders>> GetCurrentOrdersAsync();
         Task<CurrentOrders> GetOrderByIdAsync(Guid orderId);
         Task AddOrderAsync(CurrentOrders order);
-        Task AddItemToOrderAsync(OrderItem item);
+        Task AddItemsToOrderAsync(List<OrderItem> items);
         Task UpdateOrderAsync(CurrentOrders order);
         Task DeleteOrderAsync(Guid orderId);
     }

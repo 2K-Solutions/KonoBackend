@@ -32,9 +32,9 @@ public class OrderRepository : IOrdersRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task AddItemToOrderAsync(OrderItem item)
+    public async Task AddItemsToOrderAsync(List<OrderItem> items)
     {
-        await _context.OrderItems.AddAsync(item);
+        await _context.OrderItems.AddRangeAsync(items);
         await _context.SaveChangesAsync();
     }
 
