@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Kono.Infrastructure.Orders.Repositories;
 
-public class CurrentOrderRepository : ICurrentOrdersRepository
+public class OrderRepository : IOrdersRepository
 {
     private readonly KonoDbContext _context;
 
-    public CurrentOrderRepository(KonoDbContext context) => _context = context;
+    public OrderRepository(KonoDbContext context) => _context = context;
 
     public async Task<List<CurrentOrders>> GetCurrentOrdersAsync()
     {
@@ -29,6 +29,12 @@ public class CurrentOrderRepository : ICurrentOrdersRepository
     public async Task AddOrderAsync(CurrentOrders order)
     {
         await _context.CurrentOrders.AddAsync(order);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task AddItemToOrderAsync(OrderItem item)
+    {
+        await _context.OrderItems.AddAsync(item);
         await _context.SaveChangesAsync();
     }
 

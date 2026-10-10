@@ -20,7 +20,7 @@ public class KonoDbContext : DbContext
     public DbSet<RestaurantInvite> RestaurantInvites => Set<RestaurantInvite>();
     public DbSet<MenuItem> MenuItem => Set<MenuItem>();
     public DbSet<CurrentOrders> CurrentOrders => Set<CurrentOrders>();
-    public DbSet<OrderInfo> OrderInfo => Set<OrderInfo>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<FoodStatistics> FoodStatistics => Set<FoodStatistics>();
     public DbSet<DrinkStatistics> DrinkStatistics => Set<DrinkStatistics>();
     public DbSet<Tables> Tables => Set<Tables>();
@@ -248,7 +248,7 @@ public class KonoDbContext : DbContext
                 .IsRequired();
         });
 
-        modelBuilder.Entity<OrderInfo>(entity =>
+        modelBuilder.Entity<OrderItem>(entity =>
         {
             entity.ToTable("OrderInfo");
             entity.HasKey(e => e.Id);
