@@ -4,6 +4,8 @@ public enum MembershipError { None, NotFound, BadRequest, Forbidden }
 
 public sealed record MembershipResponse(Guid Id, Guid? RestaurantId);
 
+public sealed record AcceptInviteResponse(Guid Id, Guid? RestaurantId, string AccessToken, string RefreshToken);
+
 public sealed record MembershipResult(MembershipResponse? Response, MembershipError Error = MembershipError.None, string? Message = null)
 {
     public static MembershipResult Ok(Guid userId, Guid? restaurantId) => new(new MembershipResponse(userId, restaurantId));

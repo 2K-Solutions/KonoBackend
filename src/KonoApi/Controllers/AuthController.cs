@@ -74,6 +74,32 @@ public class AuthController : ControllerBase
         return Ok(ToTokenResponse(result));
     }
 
+    [HttpPost("owner/register")]
+    [Authorize]
+    public async Task<IActionResult> OwnerRegister([FromBody] RegisterOwnerRequest request)
+    {
+        var isAdmin = User.FindFirst("isAdmin")?.Value;
+        if (isAdmin != "true") return Forbid();
+
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+            return BadRequest(new { message = "Email and password are required" });
+
+        if(request.Password.Length < 8){
+            return BadRequest(new { message = "Password must be at least 8 characters long" });
+        }
+
+        var result = await _authService.RegisterOwnerAsync(
+            request.Email,
+            request.Password,
+            request.FirstName,
+            request.SecondName,
+            request.PhoneNumber);
+
+        if (!result.Success) return BadRequest(new { message = result.Message });
+
+        return Ok(new { ownerId = result.UserId, message = result.Message });
+    }
+
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
     {

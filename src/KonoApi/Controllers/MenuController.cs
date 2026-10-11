@@ -115,7 +115,7 @@ public class MenuController : ControllerBase
         }
     }
 
-    [HttpDelete("{restaurantId}/menu-items/{menuitem:Id}/remove")]
+    [HttpDelete("{restaurantId:guid}/menu-items/{menuItemId:guid}/remove")]
     public async Task<IActionResult> RemoveMenuItem(Guid menuItemId)
     {
         var accountType = User.FindFirst("accountType")?.Value;

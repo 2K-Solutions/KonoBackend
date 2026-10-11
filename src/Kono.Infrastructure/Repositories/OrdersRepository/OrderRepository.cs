@@ -26,6 +26,20 @@ public class OrderRepository : IOrdersRepository
         return order;
     }
 
+    public async Task<List<CurrentOrders>> GetOrdersByUserIdAsync(Guid userId)
+    {
+        return await _context.CurrentOrders
+            .Where(o => o.UserId == userId)
+            .ToListAsync();
+    }
+
+    public async Task<List<OrderItem>> GetOrderItemsByOrderIdAsync(Guid orderId)
+    {
+        return await _context.OrderItems
+            .Where(oi => oi.OrderId == orderId)
+            .ToListAsync();
+    }
+
     public async Task AddOrderAsync(CurrentOrders order)
     {
         await _context.CurrentOrders.AddAsync(order);
@@ -48,6 +62,7 @@ public class OrderRepository : IOrdersRepository
     {
         var order = await GetOrderByIdAsync(currentOrderId);
         _context.CurrentOrders.Remove(order);
+        _context.OrderItems.RemoveRange(_context.OrderItems.Where(oi => oi.OrderId == currentOrderId));
         await _context.SaveChangesAsync();
     }
 }
