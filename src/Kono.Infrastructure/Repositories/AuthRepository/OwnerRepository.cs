@@ -16,4 +16,15 @@ public class OwnerRepository : IOwnerRepository
 
     public Task<Owner?> GetByIdAsync(Guid id)
         => _context.Owners.FirstOrDefaultAsync(o => o.Id == id && o.DeletedAt == null);
+
+    public Task AddAsync(Owner owner)
+    {
+        _context.Owners.Add(owner);
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> ExistsByEmailAsync(string email)
+        => _context.Owners.AnyAsync(o => o.Email == email && o.DeletedAt == null);
+
+    public Task SaveChangesAsync() => _context.SaveChangesAsync();
 }

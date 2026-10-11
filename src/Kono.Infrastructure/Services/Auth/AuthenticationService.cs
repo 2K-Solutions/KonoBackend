@@ -13,6 +13,8 @@ public interface IAuthenticationService
     Task<LoginResult> LoginOwnerAsync(string email, string password);
     Task<LoginResult> RegisterUserAsync(string email, string password, string username,
         string? firstName, string? secondName, string? phoneNumber, UserRole? userRole, string? mobilePhoneType);
+    Task<LoginResult> RegisterOwnerAsync(string email, string password,
+        string? firstName, string? secondName, string? phoneNumber);
     Task<LoginResult> RefreshUserTokenAsync(string refreshToken);
     Task<bool> ValidateRefreshTokenAsync(string refreshToken);
     Task RevokeRefreshTokenAsync(string refreshToken);
@@ -184,6 +186,54 @@ public class AuthenticationService : IAuthenticationService
         };
     }
 
+    public async Task<LoginResult> RegisterOwnerAsync(string email, string password,
+        string? firstName, string? secondName, string? phoneNumber)
+    {
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        {
+            return new LoginResult { Success = false, Message = "Email and password are required" };
+        }
+
+        email = email.Trim();
+
+        if (!email.Contains('@') || email.Length < 5)
+        {
+            return new LoginResult { Success = false, Message = "Invalid email format" };
+        }
+
+        if (password.Length < 8)
+        {
+            return new LoginResult { Success = false, Message = "Password must be at least 8 characters" };
+        }
+
+        if (await _ownerRepository.ExistsByEmailAsync(email))
+        {
+            return new LoginResult { Success = false, Message = "Email already registered" };
+        }
+
+        var newOwner = new Kono.Identity.Domain.Owners.Owner
+        {
+            Id = Guid.NewGuid(),
+            Email = email,
+            Password = BCrypt.Net.BCrypt.HashPassword(password),
+            FirstName = firstName ?? string.Empty,
+            SecondName = secondName ?? string.Empty,
+            PhoneNumber = phoneNumber ?? string.Empty,
+            IsActive = true,
+            CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
+        };
+
+        await _ownerRepository.AddAsync(newOwner);
+        await _ownerRepository.SaveChangesAsync();
+
+        return new LoginResult
+        {
+            Success = true,
+            Message = "Owner registered successfully",
+            UserId = newOwner.Id
+        };
+    }
+
     public async Task<LoginResult> RefreshUserTokenAsync(string refreshToken)
     {
         var storedRefreshToken = await _refreshRepository.GetByTokenAsync(refreshToken);
@@ -260,4 +310,5 @@ public class AuthenticationService : IAuthenticationService
             await _refreshRepository.SaveChangesAsync();
         }
     }
+
 }
