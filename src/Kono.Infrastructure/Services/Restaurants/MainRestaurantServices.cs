@@ -287,9 +287,10 @@ public class MainRestaurantServices
     public async Task<List<Tables>> GetTables(Guid restaurantId, Guid ownerId)
     {
         var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
-        if (restaurant is null || restaurant.OwnerId != ownerId)
+        var users = await _restaurantRepository.GetRestaurantUsersByRestaurantandOwnerIdAsync(restaurantId, ownerId);
+        if (restaurant is null || restaurant.OwnerId != ownerId || users.Find(u => u.Id == ownerId) is null)
         {
-            throw new UnauthorizedAccessException("You do not own this restaurant.");
+            throw new UnauthorizedAccessException("You are not a part of this restaurant.");
         }
 
         var tables = await _tableRepository.GetTablesByRestaurantIdAsync(restaurantId);

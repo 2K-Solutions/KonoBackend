@@ -140,6 +140,8 @@ namespace Kono.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("RestaurantId");
+
                     b.ToTable("Users", (string)null);
                 });
 
@@ -163,6 +165,8 @@ namespace Kono.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("MenuItemId");
+
                     b.ToTable("DrinkStatistics", (string)null);
                 });
 
@@ -185,6 +189,8 @@ namespace Kono.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MenuItemId");
 
                     b.ToTable("FoodStatistics", (string)null);
                 });
@@ -210,6 +216,8 @@ namespace Kono.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("RestaurantId");
+
                     b.ToTable("MenuItem", (string)null);
                 });
 
@@ -233,10 +241,16 @@ namespace Kono.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("RestaurantId");
+
+                    b.HasIndex("TableId");
+
+                    b.HasIndex("UserId");
+
                     b.ToTable("CurrentOrders", (string)null);
                 });
 
-            modelBuilder.Entity("Kono.Orders.Domain.OrderInfo", b =>
+            modelBuilder.Entity("Kono.Orders.Domain.OrderItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -259,6 +273,10 @@ namespace Kono.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MenuItemId");
+
+                    b.HasIndex("OrderId");
 
                     b.ToTable("OrderInfo", (string)null);
                 });
@@ -295,6 +313,8 @@ namespace Kono.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("OwnerId");
+
                     b.ToTable("Restaurants", (string)null);
                 });
 
@@ -327,6 +347,12 @@ namespace Kono.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("OwnerId");
+
+                    b.HasIndex("RestaurantId");
+
+                    b.HasIndex("UserId");
+
                     b.ToTable("RestaurantInvites", (string)null);
                 });
 
@@ -347,7 +373,119 @@ namespace Kono.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("RestaurantId");
+
                     b.ToTable("Tables", (string)null);
+                });
+
+            modelBuilder.Entity("Kono.Identity.Domain.Users.User", b =>
+                {
+                    b.HasOne("Kono.Restaurants.Domain.Restaurant", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("Kono.Menu.Domain.DrinkStatistics", b =>
+                {
+                    b.HasOne("Kono.Menu.Domain.MenuItem", null)
+                        .WithMany()
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Kono.Menu.Domain.FoodStatistics", b =>
+                {
+                    b.HasOne("Kono.Menu.Domain.MenuItem", null)
+                        .WithMany()
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Kono.Menu.Domain.MenuItem", b =>
+                {
+                    b.HasOne("Kono.Restaurants.Domain.Restaurant", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Kono.Orders.Domain.CurrentOrders", b =>
+                {
+                    b.HasOne("Kono.Restaurants.Domain.Restaurant", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Kono.Restaurants.Domain.Tables", null)
+                        .WithMany()
+                        .HasForeignKey("TableId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Kono.Identity.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Kono.Orders.Domain.OrderItem", b =>
+                {
+                    b.HasOne("Kono.Menu.Domain.MenuItem", null)
+                        .WithMany()
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Kono.Orders.Domain.CurrentOrders", null)
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Kono.Restaurants.Domain.Restaurant", b =>
+                {
+                    b.HasOne("Kono.Identity.Domain.Owners.Owner", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Kono.Restaurants.Domain.RestaurantInvite", b =>
+                {
+                    b.HasOne("Kono.Identity.Domain.Owners.Owner", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Kono.Restaurants.Domain.Restaurant", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Kono.Identity.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Kono.Restaurants.Domain.Tables", b =>
+                {
+                    b.HasOne("Kono.Restaurants.Domain.Restaurant", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

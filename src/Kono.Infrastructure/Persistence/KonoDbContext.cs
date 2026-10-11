@@ -72,6 +72,11 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.DeletedAt)
                 .HasColumnType("timestamp with time zone");
+
+            entity.HasOne<Restaurant>()
+                .WithMany()
+                .HasForeignKey(e => e.RestaurantId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Owner>(entity =>
@@ -169,6 +174,11 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.DeletedAt)
                 .HasColumnType("timestamp with time zone");
+
+            entity.HasOne<Owner>()
+                .WithMany()
+                .HasForeignKey(e => e.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<RestaurantInvite>(entity =>
@@ -202,6 +212,21 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.RespondedAt)
                 .HasColumnType("timestamp with time zone");
+
+            entity.HasOne<Restaurant>()
+                .WithMany()
+                .HasForeignKey(e => e.RestaurantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne<Owner>()
+                .WithMany()
+                .HasForeignKey(e => e.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<MenuItem>(entity =>
@@ -224,6 +249,11 @@ public class KonoDbContext : DbContext
             entity.Property(e => e.IsDrink)
                 .HasColumnType("boolean")
                 .IsRequired();
+
+            entity.HasOne<Restaurant>()
+                .WithMany()
+                .HasForeignKey(e => e.RestaurantId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<CurrentOrders>(entity =>
@@ -246,6 +276,21 @@ public class KonoDbContext : DbContext
             entity.Property(e => e.IsActive)
                 .HasColumnType("boolean")
                 .IsRequired();
+
+            entity.HasOne<Restaurant>()
+                .WithMany()
+                .HasForeignKey(e => e.RestaurantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne<Tables>()
+                .WithMany()
+                .HasForeignKey(e => e.TableId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<OrderItem>(entity =>
@@ -266,12 +311,21 @@ public class KonoDbContext : DbContext
                 .IsRequired();
 
             entity.Property(e => e.ItemDescription)
-                .HasColumnType("varchar(256)")
-                .IsRequired(); //remove
+                .HasColumnType("varchar(256)");
 
             entity.Property(e => e.Quantity)
                 .HasColumnType("integer")
                 .IsRequired();
+
+            entity.HasOne<CurrentOrders>()
+                .WithMany()
+                .HasForeignKey(e => e.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne<MenuItem>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<FoodStatistics>(entity =>
@@ -289,11 +343,16 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.TotalOrders)
                 .HasColumnType("integer")
-                .IsRequired(); //remove
+                .IsRequired(); 
 
             entity.Property(e => e.TotalRevenue)
                 .HasColumnType("decimal(18,2)")
-                .IsRequired(); //remove
+                .IsRequired(); 
+
+            entity.HasOne<MenuItem>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<DrinkStatistics>(entity =>
@@ -311,11 +370,16 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.TotalOrders)
                 .HasColumnType("integer")
-                .IsRequired();  //remove
+                .IsRequired();  
 
             entity.Property(e => e.TotalRevenue)
                 .HasColumnType("decimal(18,2)")
-                .IsRequired();  //remove
+                .IsRequired();  
+
+            entity.HasOne<MenuItem>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Tables>(entity =>
@@ -333,7 +397,12 @@ public class KonoDbContext : DbContext
 
             entity.Property(e => e.TableState)
                 .HasColumnType("smallint")
-                .IsRequired();   //remove
+                .IsRequired();
+
+            entity.HasOne<Restaurant>()
+                .WithMany()
+                .HasForeignKey(e => e.RestaurantId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
      }
  }

@@ -23,21 +23,24 @@ public class RestaurantsController : ControllerBase
     private readonly ITableRepository _tableRepository;
     private readonly MainRestaurantServices _mainRestaurantServices;
     private readonly UserServices _userServices;
+    private readonly IAuthenticationService _authService;
 
     private static readonly TimeSpan InviteLifetime = TimeSpan.FromMinutes(30);
 
 
-    public RestaurantsController(KonoDbContext context, 
-                                IRestaurantRepository restaurantRepository, 
+    public RestaurantsController(KonoDbContext context,
+                                IRestaurantRepository restaurantRepository,
                                 ITableRepository tableRepository,
-                                MainRestaurantServices mainRestaurantServices, 
-                                UserServices userServices)
+                                MainRestaurantServices mainRestaurantServices,
+                                UserServices userServices,
+                                IAuthenticationService authService)
     {
         _context = context;
         _restaurantRepository = restaurantRepository;
         _tableRepository = tableRepository;
         _mainRestaurantServices = mainRestaurantServices;
         _userServices = userServices;
+        _authService = authService;
     }
 
     [HttpPost("create")]
@@ -141,7 +144,7 @@ public class RestaurantsController : ControllerBase
     public async Task<IActionResult> GetMyInvites()
     {
         var accountType = User.FindFirst("accountType")?.Value;
-        if (accountType != "worker") return Forbid();
+        if (accountType != "unemployed" || accountType == "owner") return Forbid();
 
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
@@ -169,27 +172,38 @@ public class RestaurantsController : ControllerBase
     public async Task<IActionResult> AcceptInvite(Guid inviteId)
     {
         var accountType = User.FindFirst("accountType")?.Value;
-        if (accountType != "worker") return Forbid();
+        if (accountType != "unemployed" || accountType == "owner") return Forbid();
 
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
 
         var result = await _mainRestaurantServices.AcceptInvite(inviteId, userId);
 
-        return result.Error switch
+        if (result.Error != MembershipError.None)
         {
-            MembershipError.None => Ok(result.Response),
-            MembershipError.NotFound => NotFound(new { message = result.Message }),
-            MembershipError.Forbidden => Forbid(),
-            _ => BadRequest(new { message = result.Message })
-        };
+            return result.Error switch
+            {
+                MembershipError.NotFound => NotFound(new { message = result.Message }),
+                MembershipError.Forbidden => Forbid(),
+                _ => BadRequest(new { message = result.Message })
+            };
+        }
+
+        var tokens = await _authService.IssueUserTokensAsync(userId);
+        if (!tokens.Success) return NotFound(new { message = tokens.Message });
+
+        return Ok(new AcceptInviteResponse(
+            result.Response!.Id,
+            result.Response.RestaurantId,
+            tokens.AccessToken ?? string.Empty,
+            tokens.RefreshToken ?? string.Empty));
     }
 
     [HttpPatch("invite/{inviteId:guid}/decline")]
     public async Task<IActionResult> DeclineInvite(Guid inviteId)
     {
         var accountType = User.FindFirst("accountType")?.Value;
-        if (accountType != "worker") return Forbid();
+        if (accountType != "unemployed" || accountType == "owner") return Forbid();
 
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
@@ -271,7 +285,7 @@ public class RestaurantsController : ControllerBase
     public async Task<IActionResult> GetTables(Guid restaurantId)
     {
         var accountType = User.FindFirst("accountType")?.Value;
-        if (accountType != "owner") return Forbid();
+        if (accountType != "owner" && accountType != "worker") return Forbid();
 
         var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();

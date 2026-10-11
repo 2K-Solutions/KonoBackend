@@ -90,4 +90,11 @@ public class RestaurantRepo : IRestaurantRepository
             .Select(ur => ur.User)
             .ToListAsync();
     }
+
+    public async Task<List<User>> GetRestaurantUsersByRestaurantIdAsync(Guid restaurantId)
+    {
+        return await _context.Users
+            .Where(u => u.RestaurantId == restaurantId && u.DeletedAt == null)
+            .ToListAsync();
+    }
 }

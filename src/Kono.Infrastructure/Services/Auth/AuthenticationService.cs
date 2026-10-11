@@ -16,6 +16,7 @@ public interface IAuthenticationService
     Task<LoginResult> RegisterOwnerAsync(string email, string password,
         string? firstName, string? secondName, string? phoneNumber);
     Task<LoginResult> RefreshUserTokenAsync(string refreshToken);
+    Task<LoginResult> IssueUserTokensAsync(Guid userId);
     Task<bool> ValidateRefreshTokenAsync(string refreshToken);
     Task RevokeRefreshTokenAsync(string refreshToken);
 }
@@ -39,6 +40,10 @@ public class AuthenticationService : IAuthenticationService
         _jwtTokenService = jwtTokenService;
     }
 
+    // Users without a restaurant are "unemployed"; once they join one they become "worker".
+    private static string GetUserAccountType(User user)
+        => user.RestaurantId == null ? "unemployed" : "worker";
+
     public async Task<LoginResult> LoginUserAsync(string email, string password)
     {
         var user = await _userRepository.GetByEmailAsync(email);
@@ -52,7 +57,7 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, "worker");
+        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, GetUserAccountType(user));
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
 
         var refreshTokenEntity = new RefreshToken
@@ -160,7 +165,7 @@ public class AuthenticationService : IAuthenticationService
 
         await _userRepository.AddAsync(newUser);
 
-        var accessToken = _jwtTokenService.GenerateAccessToken(newUser.Id, newUser.Email, "worker");
+        var accessToken = _jwtTokenService.GenerateAccessToken(newUser.Id, newUser.Email, GetUserAccountType(newUser));
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
 
         var refreshTokenEntity = new Kono.Identity.Domain.RefreshTokens.RefreshToken
@@ -257,7 +262,7 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        var newAccessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, "worker");
+        var newAccessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, GetUserAccountType(user));
         var newRefreshToken = _jwtTokenService.GenerateRefreshToken();
 
         storedRefreshToken.IsRevoked = true;
@@ -283,6 +288,45 @@ public class AuthenticationService : IAuthenticationService
             Message = "Token refreshed successfully",
             AccessToken = newAccessToken,
             RefreshToken = newRefreshToken,
+            UserId = user.Id
+        };
+    }
+
+    public async Task<LoginResult> IssueUserTokensAsync(Guid userId)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+
+        if (user == null)
+        {
+            return new LoginResult
+            {
+                Success = false,
+                Message = "User not found"
+            };
+        }
+
+        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, GetUserAccountType(user));
+        var refreshToken = _jwtTokenService.GenerateRefreshToken();
+
+        var refreshTokenEntity = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            Token = refreshToken,
+            ExpiryDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(_jwtTokenService.GetRefreshTokenExpirationDays()), DateTimeKind.Unspecified),
+            IsRevoked = false,
+            CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
+        };
+
+        await _refreshRepository.AddAsync(refreshTokenEntity);
+        await _refreshRepository.SaveChangesAsync();
+
+        return new LoginResult
+        {
+            Success = true,
+            Message = "Tokens issued",
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
             UserId = user.Id
         };
     }
