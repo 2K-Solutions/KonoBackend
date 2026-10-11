@@ -3,8 +3,8 @@ namespace Kono.Infrastructure.Contracts.Orders;
 public enum ResponseError
 {
     None,
-    BadRequest
-
+    BadRequest,
+    NotFound
 }
 
 public sealed record CreateOrderResponse(Guid orderId);

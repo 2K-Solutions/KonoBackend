@@ -40,12 +40,9 @@ public class MainOrderService
         if (drinkFlags is null)
             return CreateOrderResult.Fail(ResponseError.BadRequest, "One or more menu items do not exist in this restaurant");
 
-        var orderId = Guid.NewGuid();
-
         var order = new CurrentOrders
         {
             Id = Guid.NewGuid(),
-            OrderId = orderId,
             RestaurantId = request.RestaurantId,
             TableId = request.TableId,
             UserId = userId,
@@ -55,7 +52,7 @@ public class MainOrderService
         var items = request.Items.Select(i => new OrderItem
         {
             Id = Guid.NewGuid(),
-            OrderId = orderId,
+            OrderId = order.Id,
             MenuItemId = i.MenuItemId,
             IsDrink = drinkFlags[i.MenuItemId],
             Quantity = i.Quantity,
@@ -66,7 +63,45 @@ public class MainOrderService
         await _context.OrderItems.AddRangeAsync(items);
         await _context.SaveChangesAsync();   
 
-        return CreateOrderResult.Ok(new CreateOrderResponse(orderId));
+        return CreateOrderResult.Ok(new CreateOrderResponse(order.Id));
+    }
+    
+    public async Task<CreateOrderResult> EditOrderAsync(Guid orderId, CreateOrderRequest request, Guid userId)
+    {
+        var order = await _context.CurrentOrders.FindAsync(orderId);
+        if (order == null || order.UserId != userId)
+            return CreateOrderResult.Fail(ResponseError.NotFound, "Order not found or does not belong to the user");
+
+        if (request.Items is null || request.Items.Count == 0)
+            return CreateOrderResult.Fail(ResponseError.BadRequest, "Order must contain at least one item");
+
+        if (request.Items.Any(i => i.Quantity <= 0))
+            return CreateOrderResult.Fail(ResponseError.BadRequest, "Quantity must be greater than 0");
+
+        var drinkFlags = await GetDrinkFlagsAsync(request.RestaurantId, request.Items.Select(i => i.MenuItemId));
+        if (drinkFlags is null)
+            return CreateOrderResult.Fail(ResponseError.BadRequest, "One or more menu items do not exist in this restaurant");
+
+        order.RestaurantId = request.RestaurantId;
+        order.TableId = request.TableId;
+
+        var existingItems = _context.OrderItems.Where(i => i.OrderId == order.Id);
+        _context.OrderItems.RemoveRange(existingItems);
+
+        var newItems = request.Items.Select(i => new OrderItem
+        {
+            Id = Guid.NewGuid(),
+            OrderId = order.Id,
+            MenuItemId = i.MenuItemId,
+            IsDrink = drinkFlags[i.MenuItemId],
+            Quantity = i.Quantity,
+            ItemDescription = i.ItemDescription ?? string.Empty
+        }).ToList();
+
+        await _context.OrderItems.AddRangeAsync(newItems);
+        await _context.SaveChangesAsync();
+
+        return CreateOrderResult.Ok(new CreateOrderResponse(order.Id));
     }
 
     private async Task<Dictionary<Guid, bool>?> GetDrinkFlagsAsync(Guid restaurantId, IEnumerable<Guid> menuItemIds)
