@@ -79,7 +79,7 @@ public class OrderController : ControllerBase
         return Ok(orderItems);
     }
 
-    [HttpPatch("{orderId}/edit-order-item")]
+    [HttpPatch("{orderId}/edit-order-items")]
     public async Task<IActionResult> EditOrderItem(Guid orderId, [FromBody] CreateOrderRequest request)
     {
         var accountType = User.FindFirst("accountType")?.Value;
@@ -97,5 +97,22 @@ public class OrderController : ControllerBase
             return BadRequest(result.message);
 
         return Ok(result.message);
+    }
+
+    [HttpDelete("{orderId}/delete-order")]
+    public async Task<IActionResult> DeleteOrderAndItems(Guid orderId)
+    {
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "worker") return Forbid();
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
+
+        var order = await _ordersRepository.GetOrderByIdAsync(orderId);
+        if (order == null || order.UserId != userId) return NotFound();
+
+        await _ordersRepository.DeleteOrderAsync(order.Id);
+
+        return Ok("Order deleted successfully");
     }
 }

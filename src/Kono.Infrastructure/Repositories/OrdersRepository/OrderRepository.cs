@@ -62,6 +62,7 @@ public class OrderRepository : IOrdersRepository
     {
         var order = await GetOrderByIdAsync(currentOrderId);
         _context.CurrentOrders.Remove(order);
+        _context.OrderItems.RemoveRange(_context.OrderItems.Where(oi => oi.OrderId == currentOrderId));
         await _context.SaveChangesAsync();
     }
 }
