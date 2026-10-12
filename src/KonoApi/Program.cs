@@ -22,6 +22,10 @@ using System.Text;
 // Ensure Npgsql treats DateTime like legacy behavior to avoid Kind mismatch errors
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
+// Local dev: load secrets from a .env file (searched upward from the working directory).
+// Variables already set in the real environment win, so production config is never overridden.
+LoadDotEnv();
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
@@ -31,7 +35,7 @@ builder.Services.AddSwaggerGen(c =>
 
     var bearerScheme = new OpenApiSecurityScheme
     {
-        Description = "Enter 'Bearer' [space] and then your valid JWT token.",
+        Description = "Enter your valid JWT token.",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
@@ -50,13 +54,14 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("ConnectionStrings__DefaultConnection is not configured");
 builder.Services.AddDbContext<KonoDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 // Add JWT authentication
 var jwtSigningKey = builder.Configuration["Jwt:SigningKey"]
-    ?? throw new InvalidOperationException("Jwt:SigningKey is not configured");
+    ?? throw new InvalidOperationException("Jwt__SigningKey is not configured");
 var key = Encoding.ASCII.GetBytes(jwtSigningKey);
 
 builder.Services
@@ -103,19 +108,21 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-await using (var scope = app.Services.CreateAsyncScope())
+if(app.Environment.IsDevelopment())
 {
-    var context = scope.ServiceProvider.GetRequiredService<KonoDbContext>();
-    try
+    await using (var scope = app.Services.CreateAsyncScope())
     {
-        await DataSeeder.SeedAsync(context);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Warning: seeding failed: {ex.Message}");
+        var context = scope.ServiceProvider.GetRequiredService<KonoDbContext>();
+        try
+        {
+            await DataSeeder.SeedAsync(context);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: seeding failed: {ex.Message}");
+        }
     }
 }
-
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -127,3 +134,26 @@ app.MapGet("/", () => Results.Ok("Yurr"));
 app.MapControllers();
 
 app.Run();
+
+static void LoadDotEnv()
+{
+    var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+    while (dir != null && !File.Exists(Path.Combine(dir.FullName, ".env")))
+        dir = dir.Parent;
+    if (dir == null) return;
+
+    foreach (var rawLine in File.ReadAllLines(Path.Combine(dir.FullName, ".env")))
+    {
+        var line = rawLine.Trim();
+        if (line.Length == 0 || line.StartsWith('#')) continue;
+
+        var separator = line.IndexOf('=');
+        if (separator <= 0) continue;
+
+        var name = line[..separator].Trim();
+        var value = line[(separator + 1)..].Trim().Trim('"');
+
+        if (Environment.GetEnvironmentVariable(name) == null)
+            Environment.SetEnvironmentVariable(name, value);
+    }
+}

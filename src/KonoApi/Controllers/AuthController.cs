@@ -22,7 +22,7 @@ public class AuthController : ControllerBase
         _context = context;
     }
 
-    [HttpPost("login")]
+    [HttpPost("user/login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
@@ -46,7 +46,7 @@ public class AuthController : ControllerBase
         return Ok(ToTokenResponse(result));
     }
 
-    [HttpPost("register")]
+    [HttpPost("user/register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))

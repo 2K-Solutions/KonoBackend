@@ -54,8 +54,8 @@ public class JwtTokenService : IJwtTokenService
 
     private bool IsAdminEmail(string email)
     {
-        var adminEmails = _configuration.GetSection("Admin:Emails").GetChildren()
-            .Select(c => c.Value)
+        var section = _configuration.GetSection("Admin:Emails");
+        var adminEmails = (section.Value?.Split(',') ?? section.GetChildren().Select(c => c.Value))
             .Where(v => !string.IsNullOrWhiteSpace(v));
 
         return adminEmails.Any(e => string.Equals(e!.Trim(), email.Trim(), StringComparison.OrdinalIgnoreCase));
