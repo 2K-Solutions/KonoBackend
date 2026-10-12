@@ -5,3 +5,5 @@
 **/.gitignore
 **/*.md
 .dockerignore
+**/.env
+**/Notifications/*.json

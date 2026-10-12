@@ -18,9 +18,15 @@ using Microsoft.OpenApi;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 // Ensure Npgsql treats DateTime like legacy behavior to avoid Kind mismatch errors
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
+// Local dev: load secrets from a .env file (searched upward from the working directory).
+// Variables already set in the real environment win, so production config is never overridden.
+var dotEnvDir = LoadDotEnv();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,7 +37,7 @@ builder.Services.AddSwaggerGen(c =>
 
     var bearerScheme = new OpenApiSecurityScheme
     {
-        Description = "Enter 'Bearer' [space] and then your valid JWT token.",
+        Description = "Enter your valid JWT token.",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
@@ -50,13 +56,14 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("ConnectionStrings__DefaultConnection is not configured");
 builder.Services.AddDbContext<KonoDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 // Add JWT authentication
 var jwtSigningKey = builder.Configuration["Jwt:SigningKey"]
-    ?? throw new InvalidOperationException("Jwt:SigningKey is not configured");
+    ?? throw new InvalidOperationException("Jwt__SigningKey is not configured");
 var key = Encoding.ASCII.GetBytes(jwtSigningKey);
 
 builder.Services
@@ -81,6 +88,18 @@ builder.Services
         };
     });
 
+var firebasePath = builder.Configuration["Firebase_CredentialsPath"];
+if (!string.IsNullOrWhiteSpace(firebasePath))
+{
+    if (!Path.IsPathRooted(firebasePath) && dotEnvDir != null)
+        firebasePath = Path.GetFullPath(Path.Combine(dotEnvDir, firebasePath));
+
+    FirebaseApp.Create(new AppOptions
+    {
+        Credential = CredentialFactory.FromFile<ServiceAccountCredential>(firebasePath).ToGoogleCredential()
+    });
+}
+
 builder.Services.AddAuthorization();
 
 // Register services
@@ -103,19 +122,25 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-await using (var scope = app.Services.CreateAsyncScope())
+if(app.Environment.IsDevelopment())
 {
-    var context = scope.ServiceProvider.GetRequiredService<KonoDbContext>();
-    try
+    var adminEmail = builder.Configuration["Admin:Emails"]?
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .FirstOrDefault();
+    var adminPassword = builder.Configuration["Admin:Password"];
+    await using (var scope = app.Services.CreateAsyncScope())
     {
-        await DataSeeder.SeedAsync(context);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Warning: seeding failed: {ex.Message}");
+        var context = scope.ServiceProvider.GetRequiredService<KonoDbContext>();
+        try
+        {
+            await DataSeeder.SeedAsync(context, adminEmail, adminPassword);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: seeding failed: {ex.Message}");
+        }
     }
 }
-
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -127,3 +152,29 @@ app.MapGet("/", () => Results.Ok("Yurr"));
 app.MapControllers();
 
 app.Run();
+
+// Returns the folder containing .env (or null), so relative paths in it can be resolved from there.
+static string? LoadDotEnv()
+{
+    var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+    while (dir != null && !File.Exists(Path.Combine(dir.FullName, ".env")))
+        dir = dir.Parent;
+    if (dir == null) return null;
+
+    foreach (var rawLine in File.ReadAllLines(Path.Combine(dir.FullName, ".env")))
+    {
+        var line = rawLine.Trim();
+        if (line.Length == 0 || line.StartsWith('#')) continue;
+
+        var separator = line.IndexOf('=');
+        if (separator <= 0) continue;
+
+        var name = line[..separator].Trim();
+        var value = line[(separator + 1)..].Trim().Trim('"');
+
+        if (Environment.GetEnvironmentVariable(name) == null)
+            Environment.SetEnvironmentVariable(name, value);
+    }
+
+    return dir.FullName;
+}

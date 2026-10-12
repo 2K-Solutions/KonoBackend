@@ -9,7 +9,7 @@ namespace Kono.Infrastructure.Persistence;
 
 public static class DataSeeder
 {
-    public static async Task SeedAsync(KonoDbContext context)
+    public static async Task SeedAsync(KonoDbContext context, string? adminEmail, string? adminPassword)
     {
         await context.Database.MigrateAsync();
 
@@ -50,24 +50,40 @@ public static class DataSeeder
 
         if (!await context.Owners.AnyAsync())
         {
-            var owner = new Owner
+            var owner1 = new Owner
             {
                 Id = Guid.NewGuid(),
                 Email = "owner@kono.app",
-                Password = BCrypt.Net.BCrypt.HashPassword("OwnerPass123!"),
+                Password = BCrypt.Net.BCrypt.HashPassword("12345678"),
                 FirstName = "Kono",
                 SecondName = "Owner",
                 PhoneNumber = "+12345678",
                 IsActive = true,
                 CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
             };
-            context.Owners.Add(owner);
+            
+            context.Owners.Add(owner1);
+
+            if (!string.IsNullOrWhiteSpace(adminEmail) && !string.IsNullOrWhiteSpace(adminPassword))
+            {
+                context.Owners.Add(new Owner
+                {
+                    Id = Guid.NewGuid(),
+                    Email = adminEmail,
+                    Password = BCrypt.Net.BCrypt.HashPassword(adminPassword),
+                    FirstName = "Kono",
+                    SecondName = "Admin",
+                    PhoneNumber = "+12345678",
+                    IsActive = true,
+                    CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
+                });
+            }
 
             context.Restaurants.AddRange(
                 new Restaurant
                 {
                     Id = mainRestaurantId,
-                    OwnerId = owner.Id,
+                    OwnerId = owner1.Id,
                     RestaurantName = "Kono Rijeka",
                     City = "Rijeka",
                     Address = "Example Address 1",
@@ -76,7 +92,7 @@ public static class DataSeeder
                 new Restaurant
                 {
                     Id = Guid.NewGuid(),
-                    OwnerId = owner.Id,
+                    OwnerId = owner1.Id,
                     RestaurantName = "Kono Zagreb",
                     City = "Zagreb",
                     Address = "Example Address 2",
@@ -84,6 +100,8 @@ public static class DataSeeder
                 });
 
         }
+        await context.SaveChangesAsync();
+
         if(!await context.MenuItem.AnyAsync())
         {
             var menuRestaurantId = await context.Restaurants
