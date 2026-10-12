@@ -62,20 +62,22 @@ public static class DataSeeder
                 CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
             };
             
+            context.Owners.Add(owner1);
+
             if (!string.IsNullOrWhiteSpace(adminEmail) && !string.IsNullOrWhiteSpace(adminPassword))
-            context.Owners.AddRange(
-                owner1,
-            new Owner
             {
-                Id = Guid.NewGuid(),
-                Email = adminEmail,
-                Password = BCrypt.Net.BCrypt.HashPassword(adminPassword),
-                FirstName = "Kono",
-                SecondName = "Admin",
-                PhoneNumber = "+12345678",
-                IsActive = true,
-                CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
-            });
+                context.Owners.Add(new Owner
+                {
+                    Id = Guid.NewGuid(),
+                    Email = adminEmail,
+                    Password = BCrypt.Net.BCrypt.HashPassword(adminPassword),
+                    FirstName = "Kono",
+                    SecondName = "Admin",
+                    PhoneNumber = "+12345678",
+                    IsActive = true,
+                    CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
+                });
+            }
 
             context.Restaurants.AddRange(
                 new Restaurant
@@ -98,6 +100,8 @@ public static class DataSeeder
                 });
 
         }
+        await context.SaveChangesAsync();
+
         if(!await context.MenuItem.AnyAsync())
         {
             var menuRestaurantId = await context.Restaurants
