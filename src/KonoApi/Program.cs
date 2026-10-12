@@ -18,13 +18,15 @@ using Microsoft.OpenApi;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 // Ensure Npgsql treats DateTime like legacy behavior to avoid Kind mismatch errors
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // Local dev: load secrets from a .env file (searched upward from the working directory).
 // Variables already set in the real environment win, so production config is never overridden.
-LoadDotEnv();
+var dotEnvDir = LoadDotEnv();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,6 +88,18 @@ builder.Services
         };
     });
 
+var firebasePath = builder.Configuration["Firebase_CredentialsPath"];
+if (!string.IsNullOrWhiteSpace(firebasePath))
+{
+    if (!Path.IsPathRooted(firebasePath) && dotEnvDir != null)
+        firebasePath = Path.GetFullPath(Path.Combine(dotEnvDir, firebasePath));
+
+    FirebaseApp.Create(new AppOptions
+    {
+        Credential = CredentialFactory.FromFile<ServiceAccountCredential>(firebasePath).ToGoogleCredential()
+    });
+}
+
 builder.Services.AddAuthorization();
 
 // Register services
@@ -110,8 +124,10 @@ var app = builder.Build();
 
 if(app.Environment.IsDevelopment())
 {
-    var adminEmail = builder.Configuration["Admin:Emails"];
-    var adminPassword = builder.Configuration["Admin:SeedPassword"];
+    var adminEmail = builder.Configuration["Admin:Emails"]?
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .FirstOrDefault();
+    var adminPassword = builder.Configuration["Admin:Password"];
     await using (var scope = app.Services.CreateAsyncScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<KonoDbContext>();
@@ -137,12 +153,13 @@ app.MapControllers();
 
 app.Run();
 
-static void LoadDotEnv()
+// Returns the folder containing .env (or null), so relative paths in it can be resolved from there.
+static string? LoadDotEnv()
 {
     var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
     while (dir != null && !File.Exists(Path.Combine(dir.FullName, ".env")))
         dir = dir.Parent;
-    if (dir == null) return;
+    if (dir == null) return null;
 
     foreach (var rawLine in File.ReadAllLines(Path.Combine(dir.FullName, ".env")))
     {
@@ -158,4 +175,6 @@ static void LoadDotEnv()
         if (Environment.GetEnvironmentVariable(name) == null)
             Environment.SetEnvironmentVariable(name, value);
     }
+
+    return dir.FullName;
 }
