@@ -110,12 +110,14 @@ var app = builder.Build();
 
 if(app.Environment.IsDevelopment())
 {
+    var adminEmail = builder.Configuration["Admin:Emails"];
+    var adminPassword = builder.Configuration["Admin:SeedPassword"];
     await using (var scope = app.Services.CreateAsyncScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<KonoDbContext>();
         try
         {
-            await DataSeeder.SeedAsync(context);
+            await DataSeeder.SeedAsync(context, adminEmail, adminPassword);
         }
         catch (Exception ex)
         {

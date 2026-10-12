@@ -9,7 +9,7 @@ namespace Kono.Infrastructure.Persistence;
 
 public static class DataSeeder
 {
-    public static async Task SeedAsync(KonoDbContext context)
+    public static async Task SeedAsync(KonoDbContext context, string? adminEmail, string? adminPassword)
     {
         await context.Database.MigrateAsync();
 
@@ -61,13 +61,15 @@ public static class DataSeeder
                 IsActive = true,
                 CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
             };
+            
+            if (!string.IsNullOrWhiteSpace(adminEmail) && !string.IsNullOrWhiteSpace(adminPassword))
             context.Owners.AddRange(
                 owner1,
             new Owner
             {
                 Id = Guid.NewGuid(),
-                Email = "admin@kono.app",
-                Password = BCrypt.Net.BCrypt.HashPassword("12345678"),
+                Email = adminEmail,
+                Password = BCrypt.Net.BCrypt.HashPassword(adminPassword),
                 FirstName = "Kono",
                 SecondName = "Admin",
                 PhoneNumber = "+12345678",
