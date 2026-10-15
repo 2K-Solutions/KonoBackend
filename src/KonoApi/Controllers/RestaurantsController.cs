@@ -47,7 +47,7 @@ public class RestaurantsController : ControllerBase
         _notificationService = notificationService;
     }
 
-    [HttpPost("create")]
+    [HttpPost("create-restaurant")]
     public async Task<IActionResult> CreateRestaurant([FromBody] CreateRestaurantRequest request)
     {
         var isAdmin = User.FindFirst("isAdmin")?.Value;
@@ -310,5 +310,23 @@ public class RestaurantsController : ControllerBase
         var tables = await _mainRestaurantServices.GetTables(restaurantId, ownerId);
 
         return Ok(tables);
+    }
+
+    [HttpDelete("{restaurantId:guid}/delete-restaurant")]
+    public async Task<IActionResult> DeleteRestaurant(Guid restaurantId)
+    {
+        var isAdmin = User.FindFirst("isAdmin")?.Value;
+        var adminClaim = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (isAdmin != "true" && adminClaim != "Admin") return Forbid();
+
+        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
+
+        var result = await _mainRestaurantServices.DeleteRestaurant(restaurantId);
+        if(result.Success == false){
+            return NotFound(new { message = result.Message });
+        }
+
+        return Ok(result);
     }
 }
