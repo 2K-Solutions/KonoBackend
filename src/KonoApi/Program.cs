@@ -10,6 +10,7 @@ using Kono.Orders.Repositories;
 using Kono.Infrastructure.Orders.Repositories;
 using Kono.Infrastructure.Services.MenuItems;
 using Kono.Infrastructure.Services.Orders;
+using Kono.Infrastructure.Services.Notifications;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -117,6 +118,7 @@ builder.Services.AddScoped<UserServices>();
 builder.Services.AddScoped<MainRestaurantServices>();
 builder.Services.AddScoped<MenuItemService>();
 builder.Services.AddScoped<MainOrderService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddHostedService<RestaurantInviteCleanupService>();
 builder.Services.AddControllers();
 

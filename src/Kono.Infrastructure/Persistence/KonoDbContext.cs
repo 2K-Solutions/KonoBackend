@@ -1,5 +1,6 @@
 using Kono.Identity.Domain.Owners;
 using Kono.Identity.Domain.RefreshTokens;
+using Kono.Identity.Domain.DeviceTokens;
 using Kono.Restaurants.Domain;
 using Kono.Menu.Domain;
 using Kono.Identity.Domain.Users;
@@ -24,6 +25,7 @@ public class KonoDbContext : DbContext
     public DbSet<FoodStatistics> FoodStatistics => Set<FoodStatistics>();
     public DbSet<DrinkStatistics> DrinkStatistics => Set<DrinkStatistics>();
     public DbSet<Tables> Tables => Set<Tables>();
+    public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -403,6 +405,38 @@ public class KonoDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.RestaurantId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<DeviceToken>(entity =>
+        {
+            entity.ToTable("DeviceTokens");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.UserId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            entity.Property(e => e.Token)
+                .HasColumnType("varchar(512)")
+                .IsRequired();
+
+            entity.Property(e => e.Platform)
+                .HasColumnType("varchar(20)");
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.HasIndex(e => e.Token).IsUnique();
+
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
      }
  }

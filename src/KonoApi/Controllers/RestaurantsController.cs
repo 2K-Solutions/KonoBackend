@@ -10,6 +10,7 @@ using Kono.Infrastructure.Restaurants.Services;
 using Kono.Infrastructure.Auth.Services;
 using Kono.Infrastructure.Contracts.Restaurants;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Kono.Infrastructure.Services.Notifications;
 
 namespace KonoApi.Controllers;
 
@@ -24,6 +25,7 @@ public class RestaurantsController : ControllerBase
     private readonly MainRestaurantServices _mainRestaurantServices;
     private readonly UserServices _userServices;
     private readonly IAuthenticationService _authService;
+    private readonly INotificationService _notificationService;
 
     private static readonly TimeSpan InviteLifetime = TimeSpan.FromMinutes(30);
 
@@ -33,7 +35,8 @@ public class RestaurantsController : ControllerBase
                                 ITableRepository tableRepository,
                                 MainRestaurantServices mainRestaurantServices,
                                 UserServices userServices,
-                                IAuthenticationService authService)
+                                IAuthenticationService authService,
+                                INotificationService notificationService)
     {
         _context = context;
         _restaurantRepository = restaurantRepository;
@@ -41,6 +44,7 @@ public class RestaurantsController : ControllerBase
         _mainRestaurantServices = mainRestaurantServices;
         _userServices = userServices;
         _authService = authService;
+        _notificationService = notificationService;
     }
 
     [HttpPost("create")]
@@ -130,6 +134,19 @@ public class RestaurantsController : ControllerBase
         }
 
         var invite = await _mainRestaurantServices.GenerateInvite(InviteLifetime, request.UserId, request.RestaurantId);
+
+        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(request.RestaurantId);
+        await _notificationService.SendToUserAsync(
+            request.UserId,
+            "New restaurant invite",
+            $"You've been invited to join {restaurant?.RestaurantName ?? "a restaurant"}. The invite expires in {InviteLifetime.TotalMinutes:0} minutes.",
+            new Dictionary<string, string>
+            {
+                ["type"] = "restaurant_invite",
+                ["inviteId"] = invite.Id.ToString(),
+                ["restaurantId"] = invite.RestaurantId.ToString(),
+                ["expiresAt"] = invite.ExpiresAt.ToString("o")
+            });
 
         return Ok(new
         {

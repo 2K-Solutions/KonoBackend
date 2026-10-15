@@ -22,6 +22,38 @@ namespace Kono.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Kono.Identity.Domain.DeviceTokens.DeviceToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Platform")
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("varchar(512)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DeviceTokens", (string)null);
+                });
+
             modelBuilder.Entity("Kono.Identity.Domain.Owners.Owner", b =>
                 {
                     b.Property<Guid>("Id")
@@ -376,6 +408,15 @@ namespace Kono.Infrastructure.Migrations
                     b.HasIndex("RestaurantId");
 
                     b.ToTable("Tables", (string)null);
+                });
+
+            modelBuilder.Entity("Kono.Identity.Domain.DeviceTokens.DeviceToken", b =>
+                {
+                    b.HasOne("Kono.Identity.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Kono.Identity.Domain.Users.User", b =>
