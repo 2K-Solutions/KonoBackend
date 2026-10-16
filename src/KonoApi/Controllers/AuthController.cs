@@ -21,7 +21,7 @@ public class AuthController : ControllerBase
         _authService = authService;
         _context = context;
     }
-
+    // Login just for the user 
     [HttpPost("user/login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
@@ -33,7 +33,7 @@ public class AuthController : ControllerBase
 
         return Ok(ToTokenResponse(result));
     }
-
+    //Login for the owner 
     [HttpPost("owner/login")]
     public async Task<IActionResult> OwnerLogin([FromBody] LoginRequest request)
     {
@@ -45,7 +45,7 @@ public class AuthController : ControllerBase
 
         return Ok(ToTokenResponse(result));
     }
-
+    // Register just for the user
     [HttpPost("user/register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
@@ -73,7 +73,7 @@ public class AuthController : ControllerBase
 
         return Ok(ToTokenResponse(result));
     }
-
+    // Register for the owner, only admin can register the owner
     [HttpPost("owner/register")]
     [Authorize]
     public async Task<IActionResult> OwnerRegister([FromBody] RegisterOwnerRequest request)
@@ -99,7 +99,7 @@ public class AuthController : ControllerBase
 
         return Ok(new { ownerId = result.UserId, message = result.Message });
     }
-
+    // Refresh the user's or the owners refresh token
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
     {
@@ -111,7 +111,7 @@ public class AuthController : ControllerBase
 
         return Ok(ToTokenResponse(result));
     }
-
+    //Validates the refresh token for the user or the owner
     [HttpPost("validate-refresh")]
     public async Task<IActionResult> ValidateRefresh([FromBody] RefreshTokenRequest request)
     {
@@ -123,7 +123,7 @@ public class AuthController : ControllerBase
 
         return Ok(new { message = "Refresh token is valid" });
     }
-
+    //Validates the user return user info
     [HttpGet("validate")]
     [Authorize]
     public async Task<IActionResult> ValidateAccess()
@@ -141,12 +141,9 @@ public class AuthController : ControllerBase
             currentUser.Username,
             currentUser.FirstName,
             currentUser.SecondName,
-            currentUser.PhoneNumber,
-            currentUser.UserRole,
-            currentUser.MobilePhoneType
         });
     }
-
+    // Logout the user or the owner by revoking the refresh token
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest request)
     {
