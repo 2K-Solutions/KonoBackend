@@ -251,9 +251,9 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        var user = await _userRepository.GetByIdAsync(storedRefreshToken.UserId);
+        var account = await FindAccountAsync(storedRefreshToken.UserId);
 
-        if (user == null)
+        if (account == null)
         {
             return new LoginResult
             {
@@ -262,7 +262,9 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        var newAccessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, GetUserAccountType(user));
+        var (accountId, email, accountType) = account.Value;
+
+        var newAccessToken = _jwtTokenService.GenerateAccessToken(accountId, email, accountType);
         var newRefreshToken = _jwtTokenService.GenerateRefreshToken();
 
         storedRefreshToken.IsRevoked = true;
@@ -271,7 +273,7 @@ public class AuthenticationService : IAuthenticationService
         var newRefreshTokenEntity = new RefreshToken
         {
             Id = Guid.NewGuid(),
-            UserId = user.Id,
+            UserId = accountId,
             Token = newRefreshToken,
             ExpiryDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(_jwtTokenService.GetRefreshTokenExpirationDays()), DateTimeKind.Unspecified),
             IsRevoked = false,
@@ -288,8 +290,19 @@ public class AuthenticationService : IAuthenticationService
             Message = "Token refreshed successfully",
             AccessToken = newAccessToken,
             RefreshToken = newRefreshToken,
-            UserId = user.Id
+            UserId = accountId
         };
+    }
+
+    private async Task<(Guid Id, string Email, string AccountType)?> FindAccountAsync(Guid id)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user != null) return (user.Id, user.Email, GetUserAccountType(user));
+
+        var owner = await _ownerRepository.GetByIdAsync(id);
+        if (owner != null) return (owner.Id, owner.Email, "owner");
+
+        return null;
     }
 
     public async Task<LoginResult> IssueUserTokensAsync(Guid userId)
@@ -339,8 +352,7 @@ public class AuthenticationService : IAuthenticationService
             return false;
         }
 
-        var userExists = await _userRepository.GetByIdAsync(storedRefreshToken.UserId) != null;
-        return userExists;
+        return await FindAccountAsync(storedRefreshToken.UserId) != null;
     }
 
     public async Task RevokeRefreshTokenAsync(string refreshToken)

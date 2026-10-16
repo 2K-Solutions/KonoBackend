@@ -10,6 +10,7 @@ using Kono.Infrastructure.Restaurants.Services;
 using Kono.Infrastructure.Auth.Services;
 using Kono.Infrastructure.Contracts.Restaurants;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Kono.Infrastructure.Services.Notifications;
 
 namespace KonoApi.Controllers;
 
@@ -24,6 +25,7 @@ public class RestaurantsController : ControllerBase
     private readonly MainRestaurantServices _mainRestaurantServices;
     private readonly UserServices _userServices;
     private readonly IAuthenticationService _authService;
+    private readonly INotificationService _notificationService;
 
     private static readonly TimeSpan InviteLifetime = TimeSpan.FromMinutes(30);
 
@@ -33,7 +35,8 @@ public class RestaurantsController : ControllerBase
                                 ITableRepository tableRepository,
                                 MainRestaurantServices mainRestaurantServices,
                                 UserServices userServices,
-                                IAuthenticationService authService)
+                                IAuthenticationService authService,
+                                INotificationService notificationService)
     {
         _context = context;
         _restaurantRepository = restaurantRepository;
@@ -41,9 +44,10 @@ public class RestaurantsController : ControllerBase
         _mainRestaurantServices = mainRestaurantServices;
         _userServices = userServices;
         _authService = authService;
+        _notificationService = notificationService;
     }
 
-    [HttpPost("create")]
+    [HttpPost("create-restaurant")]
     public async Task<IActionResult> CreateRestaurant([FromBody] CreateRestaurantRequest request)
     {
         var isAdmin = User.FindFirst("isAdmin")?.Value;
@@ -130,6 +134,19 @@ public class RestaurantsController : ControllerBase
         }
 
         var invite = await _mainRestaurantServices.GenerateInvite(InviteLifetime, request.UserId, request.RestaurantId);
+
+        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(request.RestaurantId);
+        await _notificationService.SendToUserAsync(
+            request.UserId,
+            "New restaurant invite",
+            $"You've been invited to join {restaurant?.RestaurantName ?? "a restaurant"}. The invite expires in {InviteLifetime.TotalMinutes:0} minutes.",
+            new Dictionary<string, string>
+            {
+                ["type"] = "restaurant_invite",
+                ["inviteId"] = invite.Id.ToString(),
+                ["restaurantId"] = invite.RestaurantId.ToString(),
+                ["expiresAt"] = invite.ExpiresAt.ToString("o")
+            });
 
         return Ok(new
         {
@@ -293,5 +310,23 @@ public class RestaurantsController : ControllerBase
         var tables = await _mainRestaurantServices.GetTables(restaurantId, ownerId);
 
         return Ok(tables);
+    }
+
+    [HttpDelete("{restaurantId:guid}/delete-restaurant")]
+    public async Task<IActionResult> DeleteRestaurant(Guid restaurantId)
+    {
+        var isAdmin = User.FindFirst("isAdmin")?.Value;
+        var adminClaim = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (isAdmin != "true" && adminClaim != "Admin") return Forbid();
+
+        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
+
+        var result = await _mainRestaurantServices.DeleteRestaurant(restaurantId);
+        if(result.Success == false){
+            return NotFound(new { message = result.Message });
+        }
+
+        return Ok(result);
     }
 }

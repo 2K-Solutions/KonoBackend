@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Kono.Infrastructure.Contracts.MenuItems;
 using Kono.Menu.Domain;
 using Kono.Infrastructure.Contracts.Restaurants;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 
 
@@ -295,5 +296,25 @@ public class MainRestaurantServices
 
         var tables = await _tableRepository.GetTablesByRestaurantIdAsync(restaurantId);
         return tables;
+    }
+
+    public async Task<DeleteRestaurantResponse> DeleteRestaurant(Guid restaurantId)
+    {
+        var result = new DeleteRestaurantResponse();
+        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
+        if (restaurant is null)
+        {
+            result.Success = false;
+            result.Message = "Restaurant not found";
+            return result;
+        }
+
+        restaurant.DeletedAt = DateTime.UtcNow;
+        await _restaurantRepository.UpdateRestaurantAsync(restaurant);
+        await _context.SaveChangesAsync();
+
+        result.Success = true;
+        result.Message = "Restaurant deleted successfully";
+        return result;
     }
 }

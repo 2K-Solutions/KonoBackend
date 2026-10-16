@@ -41,22 +41,23 @@ public class FoodStatsRepository : IFoodStatsRepository
             .ToListAsync();
     }
 
-    public async Task<List<FoodStatistics>> GetAllFoodStatisticsAsync(Guid restaurantId)
+    public async Task<List<FoodStatistics>> GetAllFoodStatisticsAsync(Guid restaurantId, DateTime startDate, DateTime endDate)
     {
         return await _context.FoodStatistics
             .Join(_context.MenuItem, fs => fs.MenuItemId, mi => mi.Id, (fs, mi) => new { Stat = fs, mi.RestaurantId })
-            .Where(x => x.RestaurantId == restaurantId)
+            .Where(x => x.RestaurantId == restaurantId && x.Stat.StatDate >= startDate && x.Stat.StatDate <= endDate)
             .Select(x => x.Stat)
             .OrderBy(fs => fs.StatDate)
             .ToListAsync();
     }
-    public async Task<List<DrinkStatistics>> GetAllDrinkStatisticsAsync(Guid restaurantId)
+    public async Task<List<DrinkStatistics>> GetAllDrinkStatisticsAsync(Guid restaurantId, DateTime startDate, DateTime endDate)
     {
         return await _context.DrinkStatistics
             .Join(_context.MenuItem, fs => fs.MenuItemId, mi => mi.Id, (fs, mi) => new { Stat = fs, mi.RestaurantId })
-            .Where(x => x.RestaurantId == restaurantId)
+            .Where(x => x.RestaurantId == restaurantId && x.Stat.StatDate >= startDate && x.Stat.StatDate <= endDate)
             .Select(x => x.Stat)
             .OrderBy(fs => fs.StatDate)
             .ToListAsync();
     }
+    
 }
