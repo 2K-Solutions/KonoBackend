@@ -317,4 +317,31 @@ public class MainRestaurantServices
         result.Message = "Restaurant deleted successfully";
         return result;
     }
+
+    public async Task<DeleteTableResponse> DeleteTable(Guid restaurantId, Guid tableId, Guid ownerId)
+    {
+        var result = new DeleteTableResponse();
+        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
+        if (restaurant is null || restaurant.OwnerId != ownerId)
+        {
+            result.Success = false;
+            result.Message = "You do not own this restaurant.";
+            return result;
+        }
+
+        var table = await _tableRepository.GetTableByIdAsync(tableId);
+        if (table is null || table.RestaurantId != restaurantId)
+        {
+            result.Success = false;
+            result.Message = "Table not found in this restaurant.";
+            return result;
+        }
+
+        await _tableRepository.DeleteTableAsync(tableId);
+        await _context.SaveChangesAsync();
+
+        result.Success = true;
+        result.Message = "Table deleted successfully";
+        return result;
+    }   
 }

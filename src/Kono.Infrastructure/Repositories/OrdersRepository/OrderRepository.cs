@@ -61,8 +61,8 @@ public class OrderRepository : IOrdersRepository
     public async Task DeleteOrderAsync(Guid currentOrderId)
     {
         var order = await GetOrderByIdAsync(currentOrderId);
-        _context.CurrentOrders.Remove(order);
         _context.OrderItems.RemoveRange(_context.OrderItems.Where(oi => oi.OrderId == currentOrderId));
+        _context.CurrentOrders.Remove(order);
         await _context.SaveChangesAsync();
     }
 }
