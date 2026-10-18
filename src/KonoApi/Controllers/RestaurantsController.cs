@@ -47,6 +47,7 @@ public class RestaurantsController : ControllerBase
         _notificationService = notificationService;
     }
 
+    //Allows the admin to create a new restaurant and assign an owner to it
     [HttpPost("create-restaurant")]
     public async Task<IActionResult> CreateRestaurant([FromBody] CreateRestaurantRequest request)
     {
@@ -66,6 +67,7 @@ public class RestaurantsController : ControllerBase
         return Ok(restaurant);
     }
 
+    //Allows the owner to get all their restaurants
     [HttpGet("mine")]
     public async Task<IActionResult> GetMine()
     {
@@ -80,6 +82,7 @@ public class RestaurantsController : ControllerBase
         return Ok(restaurants);
     }
 
+    //Allows the owner to get a list of all users who are not currently employed by any restaurant
     [HttpGet("available-users")]
     public async Task<IActionResult> GetAvailableUsers()
     {
@@ -91,7 +94,8 @@ public class RestaurantsController : ControllerBase
         return Ok(availableUsers);
     }
 
-    [HttpGet("available-users/search")] //Retrieves a list of 5 users with no restaurantId
+    //Retrieves a list of 5 users with no restaurantId
+    [HttpGet("available-users/search")] 
     public async Task<IActionResult> SearchAvailableUsers([FromQuery] string query)
     {
         var accountType = User.FindFirst("accountType")?.Value;
@@ -109,7 +113,7 @@ public class RestaurantsController : ControllerBase
         return Ok(availableUsers);
     }
 
-
+    //Owner invites a user to join their restaurant. The invite is valid for 30 minutes.
     [HttpPost("invite")]
     public async Task<IActionResult> InviteUser([FromBody] CreateRestaurantInviteRequest request)
     {
@@ -157,6 +161,7 @@ public class RestaurantsController : ControllerBase
         });
     }
 
+    //Allows the user to get all their pending invites
     [HttpGet("invites/mine")]
     public async Task<IActionResult> GetMyInvites()
     {
@@ -170,7 +175,7 @@ public class RestaurantsController : ControllerBase
 
         return Ok(invites);
     }
-
+    //Allows the owner to get all pending invites for a specific restaurant
     [HttpGet("{restaurantId:guid}/invites")]
     public async Task<IActionResult> GetRestaurantInvites(Guid restaurantId)
     {
@@ -185,6 +190,7 @@ public class RestaurantsController : ControllerBase
         return Ok(invites);
     }
 
+    //User accepts the invite
     [HttpPatch("invite/{inviteId:guid}/accept")]
     public async Task<IActionResult> AcceptInvite(Guid inviteId)
     {
@@ -216,6 +222,7 @@ public class RestaurantsController : ControllerBase
             tokens.RefreshToken ?? string.Empty));
     }
 
+    //User declines the invite
     [HttpPatch("invite/{inviteId:guid}/decline")]
     public async Task<IActionResult> DeclineInvite(Guid inviteId)
     {
@@ -236,6 +243,7 @@ public class RestaurantsController : ControllerBase
         };
     }
 
+    //Allows the owner to kick a user from their restaurant
     [HttpPatch("kick/{userId:guid}")]
     public async Task<IActionResult> KickUser(Guid userId)
     {
@@ -256,6 +264,7 @@ public class RestaurantsController : ControllerBase
         };
     }
 
+    //Allows the owner to get a list of all users who are currently employed by their restaurant
     [HttpGet("{restaurantId:guid}/get-my-workers")]
     public async Task<IActionResult> GetMyWorkers(Guid restaurantId)
     {
@@ -270,6 +279,7 @@ public class RestaurantsController : ControllerBase
         return Ok(workers);
     }
 
+    //Allows the owner to add a new table to their restaurant
     [HttpPost("{restaurantId:guid}/tables/add-table")]
     public async Task<IActionResult> AddTable(Guid restaurantId, [FromBody] AddTableRequest request)
     {
@@ -284,6 +294,7 @@ public class RestaurantsController : ControllerBase
         return Ok(table);
     }
 
+    //Allows the owner to edit a table in their restaurant
     [HttpPatch("{restaurantId:guid}/tables/{tableId:guid}/edit-table")]
     public async Task<IActionResult> EditTable(Guid restaurantId, Guid tableId, [FromBody] EditTableRequest request)
     {
@@ -298,6 +309,7 @@ public class RestaurantsController : ControllerBase
         return Ok(table);
     }
 
+    //Allows the owner or worker to get current tables
     [HttpGet("{restaurantId:guid}/tables")]
     public async Task<IActionResult> GetTables(Guid restaurantId)
     {
@@ -312,6 +324,27 @@ public class RestaurantsController : ControllerBase
         return Ok(tables);
     }
 
+    //Allows the owner to delete a table from their restaurant
+    [HttpDelete("{restaurantId:guid}/tables/{tableId:guid}/delete-table")]
+    public async Task<IActionResult> DeleteTable(Guid restaurantId, Guid tableId)
+    {
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "owner") return Forbid();
+
+        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
+
+        var result = await _mainRestaurantServices.DeleteTable(restaurantId, tableId, ownerId);
+
+        if (!result.Success)
+        {
+            return NotFound(new { message = result.Message });
+        }
+
+        return Ok(result);
+    }
+
+    //Allows the admin to delete a restaurant
     [HttpDelete("{restaurantId:guid}/delete-restaurant")]
     public async Task<IActionResult> DeleteRestaurant(Guid restaurantId)
     {

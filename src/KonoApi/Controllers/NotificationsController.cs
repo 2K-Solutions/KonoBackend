@@ -18,6 +18,7 @@ public class NotificationsController : ControllerBase
         _notificationService = notificationService;
     }
 
+    // After the user registers send RegisterDevice so that the device token can be stored for notifications
     [HttpPost("devices")]
     public async Task<IActionResult> RegisterDevice([FromBody] RegisterDeviceRequest request)
     {
@@ -35,6 +36,7 @@ public class NotificationsController : ControllerBase
         return Ok(new { message = "Device registered" });
     }
 
+    //After logout send RemoveDevice so that the device token can be removed from the database
     [HttpDelete("delete-device")]
     public async Task<IActionResult> RemoveDevice([FromBody] RemoveDeviceRequest request)
     {
