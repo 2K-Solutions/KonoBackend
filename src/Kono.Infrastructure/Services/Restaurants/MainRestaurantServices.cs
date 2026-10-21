@@ -73,12 +73,10 @@ public class MainRestaurantServices
     // Fetches 5 users that dont have restaurantId, Returns: List of 5 basic user info
     public async Task<List<BasicUserInfo>> GetSomeAvailableUsersAsync([FromQuery] string query)
     {
-        var availableUsers = await _restaurantRepository.GetSomeAvailableUsersAsync();
+        var availableUsers = await _restaurantRepository.GetSomeAvailableUsersAsync(query);
 
         return availableUsers
             .Select(u => new BasicUserInfo(u.Id, u.Email, u.Username, u.FirstName, u.SecondName))
-            .Where(u => EF.Functions.ILike(u.Username, $"%{query}%"))
-            .OrderBy(u => u.Username)
             .ToList();
     }
 

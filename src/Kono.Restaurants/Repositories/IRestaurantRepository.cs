@@ -11,7 +11,7 @@ public interface IRestaurantRepository
     Task UpdateRestaurantAsync(Restaurant restaurant);
     Task DeleteRestaurantAsync(Guid restaurantId);
     Task<List<Restaurant>> GetRestaurantsByOwnerIdAsync(Guid ownerId);
-    Task<List<User>> GetSomeAvailableUsersAsync();
+    Task<List<User>> GetSomeAvailableUsersAsync(string query);
     Task<Guid> GetOwnerIdByRestaurantIdAsync(Guid restaurantId);
     Task<List<User>> GetRestaurantUsersByRestaurantIdAsync(Guid restaurantId);
     Task<List<User>> GetRestaurantUsersByRestaurantandOwnerIdAsync(Guid restaurantId, Guid ownerId);
