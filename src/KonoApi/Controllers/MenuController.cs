@@ -70,7 +70,7 @@ public class MenuController : ControllerBase
         var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
         if(restaurant == null) return NotFound();
         if(accountType == "owner" && restaurant.OwnerId != userId) return Forbid();
-        if(accountType == "worker" && _restaurantRepository.GetRestaurantUserByIdAsync(userId) == null) return Forbid();
+        if(accountType == "worker" && await _restaurantRepository.GetRestaurantByUserIdAsync(userId) != restaurantId) return Forbid();
 
         var foodItems = await _menuRepository.GetFoodItemsByRestaurantIdAsync(restaurantId);
         return Ok(foodItems);
@@ -89,7 +89,7 @@ public class MenuController : ControllerBase
         var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
         if(restaurant == null) return NotFound();
         if(accountType == "owner" && restaurant.OwnerId != userId) return Forbid();
-        if(accountType == "worker" && _restaurantRepository.GetRestaurantUserByIdAsync(userId) == null) return Forbid();
+        if(accountType == "worker" && await _restaurantRepository.GetRestaurantByUserIdAsync(userId) != restaurantId) return Forbid();
 
         var drinkItems = await _menuRepository.GetDrinkItemsByRestaurantIdAsync(restaurantId);
         return Ok(drinkItems);

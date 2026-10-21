@@ -77,7 +77,7 @@ public class RestaurantsController : ControllerBase
         var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
 
-        var restaurants = _mainRestaurantServices.GetRestaurant(ownerId);
+        var restaurants = await _mainRestaurantServices.GetRestaurant(ownerId);
 
         return Ok(restaurants);
     }

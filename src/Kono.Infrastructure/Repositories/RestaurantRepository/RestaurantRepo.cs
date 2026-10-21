@@ -98,10 +98,11 @@ public class RestaurantRepo : IRestaurantRepository
             .ToListAsync();
     }
 
-    public async Task<User?> GetRestaurantUserByIdAsync(Guid userId)
+    public async Task<Guid?> GetRestaurantByUserIdAsync(Guid userId)
     {
         return await _context.Users
-            .Where(u => u.Id == userId && u.DeletedAt == null)
+            .Where(u => u.Id == userId && u.DeletedAt == null && u.RestaurantId != null)
+            .Select(u => u.RestaurantId)
             .FirstOrDefaultAsync();
     }
 }
