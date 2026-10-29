@@ -57,41 +57,25 @@ public class MenuController : ControllerBase
         }
     }
 
-    //Allows the owner to get all food items for a specific restaurant
-    [HttpGet("{restaurantId}/get-food-items")]
-    public async Task<IActionResult> GetAllFoodItems(Guid restaurantId)
+    //Allows the worker (restaurantId from token) or the owner (restaurantId from query) to get all food items
+    [HttpGet("get-food-items")]
+    public async Task<IActionResult> GetAllFoodItems([FromQuery] Guid? restaurantId)
     {
-        var accountType = User.FindFirst("accountType")?.Value;
-        if (accountType != "owner" || accountType != "worker") return Forbid();
+        var restaurantIdResult = await ResolveMenuRestaurantIdAsync(restaurantId);
+        if (restaurantIdResult.Error != null) return restaurantIdResult.Error;
 
-        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(ownerIdClaim, out var userId)) return Unauthorized();
-
-        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
-        if(restaurant == null) return NotFound();
-        if(accountType == "owner" && restaurant.OwnerId != userId) return Forbid();
-        if(accountType == "worker" && await _restaurantRepository.GetRestaurantByUserIdAsync(userId) != restaurantId) return Forbid();
-
-        var foodItems = await _menuRepository.GetFoodItemsByRestaurantIdAsync(restaurantId);
+        var foodItems = await _menuRepository.GetFoodItemsByRestaurantIdAsync(restaurantIdResult.RestaurantId);
         return Ok(foodItems);
     }
 
-    //Allows the owner to get all drink items for a specific restaurant
-    [HttpGet("{restaurantId}/get-drink-items")]
-    public async Task<IActionResult> GetAllDrinkItems(Guid restaurantId)
+    //Allows the worker (restaurantId from token) or the owner (restaurantId from query) to get all drink items
+    [HttpGet("get-drink-items")]
+    public async Task<IActionResult> GetAllDrinkItems([FromQuery] Guid? restaurantId)
     {
-        var accountType = User.FindFirst("accountType")?.Value;
-        if (accountType != "owner" || accountType != "worker") return Forbid();
+        var restaurantIdResult = await ResolveMenuRestaurantIdAsync(restaurantId);
+        if (restaurantIdResult.Error != null) return restaurantIdResult.Error;
 
-        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(ownerIdClaim, out var userId)) return Unauthorized();
-
-        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
-        if(restaurant == null) return NotFound();
-        if(accountType == "owner" && restaurant.OwnerId != userId) return Forbid();
-        if(accountType == "worker" && await _restaurantRepository.GetRestaurantByUserIdAsync(userId) != restaurantId) return Forbid();
-
-        var drinkItems = await _menuRepository.GetDrinkItemsByRestaurantIdAsync(restaurantId);
+        var drinkItems = await _menuRepository.GetDrinkItemsByRestaurantIdAsync(restaurantIdResult.RestaurantId);
         return Ok(drinkItems);
     }
     //Get quantity sold for a specific menu item within a date range
@@ -178,5 +162,31 @@ public class MenuController : ControllerBase
 
         var drinkStatistics = await _foodStatsRepository.GetAllDrinkStatisticsAsync(restaurantId, startDate, endDate);
         return Ok(drinkStatistics);
+    }
+
+    // Workers get their restaurantId from the token; owners can own several restaurants so they pass it in the query
+    private async Task<(Guid RestaurantId, IActionResult? Error)> ResolveMenuRestaurantIdAsync(Guid? requestedRestaurantId)
+    {
+        var accountType = User.FindFirst("accountType")?.Value;
+
+        if (accountType == "worker")
+        {
+            var restaurantIdClaim = User.FindFirst("restaurantId")?.Value;
+            if (!Guid.TryParse(restaurantIdClaim, out var workerRestaurantId)) return (Guid.Empty, Forbid());
+            return (workerRestaurantId, null);
+        }
+
+        if (accountType != "owner") return (Guid.Empty, Forbid());
+
+        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return (Guid.Empty, Unauthorized());
+
+        if (requestedRestaurantId == null) return (Guid.Empty, BadRequest(new { message = "restaurantId is required" }));
+
+        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(requestedRestaurantId.Value);
+        if (restaurant == null) return (Guid.Empty, NotFound());
+        if (restaurant.OwnerId != ownerId) return (Guid.Empty, Forbid());
+
+        return (restaurant.Id, null);
     }
 }

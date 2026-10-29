@@ -123,7 +123,7 @@ public class RestaurantsController : ControllerBase
         var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
 
-        var inviteResult = await _mainRestaurantServices.CheckUserInvites(request.UserId, request.RestaurantId);
+        var inviteResult = await _mainRestaurantServices.CheckUserInvites(request.UserId, request.RestaurantId, ownerId);
 
         if(!inviteResult.RestaurantSuccess){
             return BadRequest(new { message = inviteResult.Message });
@@ -137,7 +137,7 @@ public class RestaurantsController : ControllerBase
             return BadRequest(new { message = inviteResult.Message });
         }
 
-        var invite = await _mainRestaurantServices.GenerateInvite(InviteLifetime, request.UserId, request.RestaurantId);
+        var invite = await _mainRestaurantServices.GenerateInvite(InviteLifetime, request.UserId, request.RestaurantId, ownerId);
 
         var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(request.RestaurantId);
         await _notificationService.SendToUserAsync(
@@ -166,7 +166,7 @@ public class RestaurantsController : ControllerBase
     public async Task<IActionResult> GetMyInvites()
     {
         var accountType = User.FindFirst("accountType")?.Value;
-        if (accountType != "unemployed" || accountType == "owner") return Forbid();
+        if (accountType != "unemployed") return Forbid();
 
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
@@ -190,12 +190,41 @@ public class RestaurantsController : ControllerBase
         return Ok(invites);
     }
 
+    [HttpPatch("abandon-restaurant")]
+    public async Task<IActionResult> AbandonRestaurant()
+    {
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "worker") return Forbid();
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
+
+        var restaurant = await _restaurantRepository.GetRestaurantByUserIdAsync(userId);
+        if (restaurant == null) return NotFound();
+        Guid restaurantId = (Guid)restaurant;
+        var result = await _mainRestaurantServices.AbandonRestaurant(userId, restaurantId);
+
+        if (!result.Success)
+        {
+            return NotFound(new { message = result.Message });
+        }
+
+        // Reissue tokens so the restaurantId claim is removed and accountType becomes "unemployed"
+        var tokens = await _authService.IssueUserTokensAsync(userId);
+        if (!tokens.Success) return NotFound(new { message = tokens.Message });
+
+        result.AccessToken = tokens.AccessToken ?? string.Empty;
+        result.RefreshToken = tokens.RefreshToken ?? string.Empty;
+
+        return Ok(result);
+    }
+
     //User accepts the invite
     [HttpPatch("invite/{inviteId:guid}/accept")]
     public async Task<IActionResult> AcceptInvite(Guid inviteId)
     {
         var accountType = User.FindFirst("accountType")?.Value;
-        if (accountType != "unemployed" || accountType == "owner") return Forbid();
+        if (accountType != "unemployed") return Forbid();
 
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
@@ -227,7 +256,7 @@ public class RestaurantsController : ControllerBase
     public async Task<IActionResult> DeclineInvite(Guid inviteId)
     {
         var accountType = User.FindFirst("accountType")?.Value;
-        if (accountType != "unemployed" || accountType == "owner") return Forbid();
+        if (accountType != "unemployed") return Forbid();
 
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
