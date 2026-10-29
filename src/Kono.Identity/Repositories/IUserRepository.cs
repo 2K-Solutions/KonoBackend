@@ -10,4 +10,5 @@ public interface IUserRepository
     Task<bool> ExistsByEmailAsync(string email);
     Task SaveChangesAsync();
     Task<List<User>> GetUnemployedUsersAsync();
+    Task<User> UpdateUserAsync(User user);
 }

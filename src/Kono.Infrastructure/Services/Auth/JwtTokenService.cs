@@ -9,7 +9,7 @@ namespace Kono.Infrastructure.Auth.Services;
 
 public interface IJwtTokenService
 {
-    string GenerateAccessToken(Guid userId, string email, string accountType);
+    string GenerateAccessToken(Guid userId, string email, string accountType, Guid? restaurantId = null);
     string GenerateRefreshToken();
     int GetRefreshTokenExpirationDays();
     ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
@@ -24,7 +24,7 @@ public class JwtTokenService : IJwtTokenService
         _configuration = configuration;
     }
 
-    public string GenerateAccessToken(Guid userId, string email, string accountType)
+    public string GenerateAccessToken(Guid userId, string email, string accountType, Guid? restaurantId = null)
     {
         var securityKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_configuration["Jwt:SigningKey"] ?? throw new InvalidOperationException("JWT SigningKey not configured")));
@@ -36,6 +36,12 @@ public class JwtTokenService : IJwtTokenService
             new Claim(ClaimTypes.Email, email),
             new Claim("accountType", accountType)
         };
+
+        // Only users carry a restaurantId claim; it's set while they belong to a restaurant
+        if (restaurantId.HasValue)
+        {
+            claims.Add(new Claim("restaurantId", restaurantId.Value.ToString()));
+        }
 
         if (accountType == "owner" && IsAdminEmail(email))
         {

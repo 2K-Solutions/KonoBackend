@@ -81,11 +81,8 @@ public class MainRestaurantServices
     }
 
     // Checks if a user is eligible for an invite to a restaurant, Returns: InviteResult with success flags and message
-    public async Task<InviteResult> CheckUserInvites(Guid userId, Guid restaurantId)
+    public async Task<InviteResult> CheckUserInvites(Guid userId, Guid restaurantId, Guid ownerId)
     {
-        var ownerId = await _restaurantRepository.GetOwnerIdByRestaurantIdAsync(restaurantId);
-        if (ownerId == Guid.Empty) return new InviteResult { RestaurantSuccess = false, Message = "Restaurant not found" };
-
         var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
         if (restaurant is null || restaurant.OwnerId != ownerId || restaurant.DeletedAt != null) return new InviteResult { RestaurantSuccess = false, Message = "Restaurant not found or you are not the owner" };
 
@@ -107,7 +104,7 @@ public class MainRestaurantServices
     }
 
     // Generates a new invite for a user to join a restaurant, Returns: The created RestaurantInvite
-    public async Task<RestaurantInvite> GenerateInvite(TimeSpan LifeTime, Guid userId, Guid restaurantId)
+    public async Task<RestaurantInvite> GenerateInvite(TimeSpan LifeTime, Guid userId, Guid restaurantId, Guid ownerId)
     {
         var now = DateTime.UtcNow;
         var invite = new RestaurantInvite
@@ -115,6 +112,7 @@ public class MainRestaurantServices
             Id = Guid.NewGuid(),
             UserId = userId,
             RestaurantId = restaurantId,
+            OwnerId = ownerId,
             Status = RestaurantInviteStatus.Pending,
             CreatedAt = now,
             ExpiresAt = now.Add(LifeTime) 
@@ -342,4 +340,30 @@ public class MainRestaurantServices
         result.Message = "Table deleted successfully";
         return result;
     }   
+
+    public async Task<RestaurantAbandonResponse> AbandonRestaurant(Guid userId, Guid restaurantId)
+    {
+        var result = new RestaurantAbandonResponse();
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user is null)
+        {
+            result.Success = false;
+            result.Message = "User not found.";
+            return result;
+        }
+        if(user.RestaurantId != restaurantId)
+        {
+            result.Success = false;
+            result.Message = "User does not belong to this restaurant.";
+            return result;
+        }
+
+        user.RestaurantId = null;
+        await _userRepository.UpdateUserAsync(user);
+        await _context.SaveChangesAsync();
+
+        result.Success = true;
+        result.Message = "You have abandoned the restaurant successfully";
+        return result;
+    }
 }

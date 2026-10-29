@@ -34,4 +34,10 @@ public class UserRepository : IUserRepository
             .Where(u => u.RestaurantId == null && u.DeletedAt == null)
             .ToListAsync();
     }
+    public async Task<User> UpdateUserAsync(User user)
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+        return user;
+    }
 }
