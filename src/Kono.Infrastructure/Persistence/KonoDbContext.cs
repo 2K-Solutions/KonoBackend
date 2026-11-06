@@ -170,6 +170,9 @@ public class KonoDbContext : DbContext
                 .HasColumnType("varchar(256)")
                 .IsRequired();
 
+            entity.Property(e => e.MenuHash)
+                .HasColumnType("varchar(64)");
+
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("timestamp with time zone")
                 .IsRequired();

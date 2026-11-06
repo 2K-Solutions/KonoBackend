@@ -4,6 +4,7 @@ using Kono.Identity.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Kono.Orders.Domain;
 using Kono.Menu.Domain;
+using Kono.Infrastructure.Services.MenuItems;
 
 namespace Kono.Infrastructure.Persistence;
 
@@ -140,8 +141,28 @@ public static class DataSeeder
                 );
             }
         }
-        
+
 
         await context.SaveChangesAsync();
+
+        var restaurantsWithoutHash = await context.Restaurants
+            .Where(r => r.MenuHash == null)
+            .ToListAsync();
+
+        if (restaurantsWithoutHash.Count > 0)
+        {
+            var restaurantIds = restaurantsWithoutHash.Select(r => r.Id).ToList();
+            var menuItemsByRestaurant = (await context.MenuItem
+                    .Where(mi => restaurantIds.Contains(mi.RestaurantId))
+                    .ToListAsync())
+                .ToLookup(mi => mi.RestaurantId);
+
+            foreach (var restaurant in restaurantsWithoutHash)
+            {
+                restaurant.MenuHash = MenuHasher.Compute(menuItemsByRestaurant[restaurant.Id]);
+            }
+
+            await context.SaveChangesAsync();
+        }
     }
 }
