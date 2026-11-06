@@ -59,23 +59,29 @@ public class MenuController : ControllerBase
 
     //Allows the worker (restaurantId from token) or the owner (restaurantId from query) to get all food items
     [HttpGet("get-food-items")]
-    public async Task<IActionResult> GetAllFoodItems([FromQuery] Guid? restaurantId)
+    public async Task<IActionResult> GetAllFoodItems()
     {
-        var restaurantIdResult = await ResolveMenuRestaurantIdAsync(restaurantId);
-        if (restaurantIdResult.Error != null) return restaurantIdResult.Error;
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "worker" && accountType != "owner") return Forbid();
 
-        var foodItems = await _menuRepository.GetFoodItemsByRestaurantIdAsync(restaurantIdResult.RestaurantId);
+        var restaurantId = User.FindFirst("restaurantId")?.Value;
+        if (!Guid.TryParse(restaurantId, out var restaurantGuid)) return Unauthorized();
+
+        var foodItems = await _menuRepository.GetFoodItemsByRestaurantIdAsync(restaurantGuid);
         return Ok(foodItems);
     }
 
     //Allows the worker (restaurantId from token) or the owner (restaurantId from query) to get all drink items
     [HttpGet("get-drink-items")]
-    public async Task<IActionResult> GetAllDrinkItems([FromQuery] Guid? restaurantId)
+    public async Task<IActionResult> GetAllDrinkItems()
     {
-        var restaurantIdResult = await ResolveMenuRestaurantIdAsync(restaurantId);
-        if (restaurantIdResult.Error != null) return restaurantIdResult.Error;
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "worker" && accountType != "owner") return Forbid();
 
-        var drinkItems = await _menuRepository.GetDrinkItemsByRestaurantIdAsync(restaurantIdResult.RestaurantId);
+        var restaurantId = User.FindFirst("restaurantId")?.Value;
+        if (!Guid.TryParse(restaurantId, out var restaurantGuid)) return Unauthorized();
+
+        var drinkItems = await _menuRepository.GetDrinkItemsByRestaurantIdAsync(restaurantGuid);
         return Ok(drinkItems);
     }
     //Get quantity sold for a specific menu item within a date range
@@ -124,10 +130,30 @@ public class MenuController : ControllerBase
         var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(menuItem.RestaurantId);
         if (restaurant == null || restaurant.OwnerId != ownerId) return Forbid();
 
-        _context.MenuItem.Remove(menuItem);
-        await _context.SaveChangesAsync();
+        await _menuItemService.RemoveMenuItemAsync(menuItem);
 
         return NoContent();
+    }
+
+    //Mobile app sends the menu hash it has stored; if it doesn't match the restaurant's current hash the app should refetch the menu.
+    [HttpGet("menu-hash/check")]
+    public async Task<IActionResult> CheckMenuHash([FromQuery] string? hash)
+    {
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "worker") return Forbid();
+
+        var restaurantId = User.FindFirst("restaurantId")?.Value;
+        if (!Guid.TryParse(restaurantId, out var restaurantGuid)) return Unauthorized();
+
+        try
+        {
+            var result = await _menuItemService.CheckMenuHashAsync(restaurantGuid, hash);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
     }
 
     //Allows the owner to get all food statistics for a specific restaurant within a date range
