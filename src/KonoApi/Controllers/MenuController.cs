@@ -156,6 +156,23 @@ public class MenuController : ControllerBase
         }
     }
 
+    //Allows the worker or owner to get the full menu (food and drink items) together with the current menu hash
+    [HttpGet("get-menu-hash")]
+    public async Task<IActionResult> GetMenuHash()
+    {
+        var accountType = User.FindFirst("accountType")?.Value;
+        if (accountType != "worker" && accountType != "owner") return Forbid();
+
+        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
+
+        var restaurantId = User.FindFirst("restaurantId")?.Value;
+        if (!Guid.TryParse(restaurantId, out var restaurantGuid)) return Unauthorized();
+
+        var menu = await _menuItemService.GetMenuWithHashAsync(restaurantGuid);
+        return Ok(menu);
+    }
+
     //Allows the owner to get all food statistics for a specific restaurant within a date range
     [HttpGet("{restaurantId}/get-all-food-statistics")]
     public async Task<IActionResult> GetFoodStatistics(Guid restaurantId, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
