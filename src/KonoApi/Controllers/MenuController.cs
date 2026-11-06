@@ -189,30 +189,4 @@ public class MenuController : ControllerBase
         var drinkStatistics = await _foodStatsRepository.GetAllDrinkStatisticsAsync(restaurantId, startDate, endDate);
         return Ok(drinkStatistics);
     }
-
-    // Workers get their restaurantId from the token; owners can own several restaurants so they pass it in the query
-    private async Task<(Guid RestaurantId, IActionResult? Error)> ResolveMenuRestaurantIdAsync(Guid? requestedRestaurantId)
-    {
-        var accountType = User.FindFirst("accountType")?.Value;
-
-        if (accountType == "worker")
-        {
-            var restaurantIdClaim = User.FindFirst("restaurantId")?.Value;
-            if (!Guid.TryParse(restaurantIdClaim, out var workerRestaurantId)) return (Guid.Empty, Forbid());
-            return (workerRestaurantId, null);
-        }
-
-        if (accountType != "owner") return (Guid.Empty, Forbid());
-
-        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return (Guid.Empty, Unauthorized());
-
-        if (requestedRestaurantId == null) return (Guid.Empty, BadRequest(new { message = "restaurantId is required" }));
-
-        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(requestedRestaurantId.Value);
-        if (restaurant == null) return (Guid.Empty, NotFound());
-        if (restaurant.OwnerId != ownerId) return (Guid.Empty, Forbid());
-
-        return (restaurant.Id, null);
-    }
 }
