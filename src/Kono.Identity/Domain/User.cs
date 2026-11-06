@@ -11,7 +11,7 @@ public class User
     public string SecondName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
     public UserRole? UserRole { get; set; }
-    public string? MobilePhoneType { get; set; }
+    public string? MobilePhoneType { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
 }

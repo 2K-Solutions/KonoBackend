@@ -8,6 +8,7 @@ public class Restaurant
     public string City { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
+    public string? MenuHash { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
 }

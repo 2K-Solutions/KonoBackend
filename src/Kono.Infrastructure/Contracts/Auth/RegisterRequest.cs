@@ -9,5 +9,5 @@ public sealed record RegisterRequest(
     string? FirstName,
     string? SecondName,
     string? PhoneNumber,
-    UserRole? UserRole,
-    string? MobilePhoneType);
+    UserRole? UserRole
+    );

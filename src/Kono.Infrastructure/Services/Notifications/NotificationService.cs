@@ -12,6 +12,7 @@ public interface INotificationService
     Task RegisterDeviceAsync(Guid userId, string token, string? platform);
     Task RemoveDeviceAsync(Guid userId, string token);
     Task SendToUserAsync(Guid userId, string title, string body, Dictionary<string, string>? data = null);
+    Task SendDataToUsersAsync(IEnumerable<Guid> userIds, Dictionary<string, string> data);
 }
 
 public class NotificationService : INotificationService
@@ -84,33 +85,76 @@ public class NotificationService : INotificationService
                 Data = data
             };
 
-            var response = await FirebaseMessaging.DefaultInstance.SendEachForMulticastAsync(message);
-
-            // Drop tokens FCM says are dead (app uninstalled, token rotated), so we stop sending to them.
-            var deadTokens = response.Responses
-                .Select((r, i) => (r, Token: tokens[i]))
-                .Where(x => !x.r.IsSuccess &&
-                            x.r.Exception?.MessagingErrorCode is MessagingErrorCode.Unregistered
-                                                              or MessagingErrorCode.SenderIdMismatch)
-                .Select(x => x.Token)
-                .ToList();
-
-            if (deadTokens.Count > 0)
-            {
-                await _context.DeviceTokens
-                    .Where(d => deadTokens.Contains(d.Token))
-                    .ExecuteDeleteAsync();
-            }
-
-            if (response.FailureCount > 0)
-            {
-                _logger.LogWarning("Notification to user {UserId}: {Failed} of {Total} deliveries failed",
-                    userId, response.FailureCount, tokens.Count);
-            }
+            await SendMulticastAsync(message, tokens);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send notification to user {UserId}", userId);
+        }
+    }
+
+    // Silent (data-only) push: the app receives it in the background without showing anything to the user
+    public async Task SendDataToUsersAsync(IEnumerable<Guid> userIds, Dictionary<string, string> data)
+    {
+        if (FirebaseApp.DefaultInstance == null)
+        {
+            _logger.LogWarning("Firebase is not configured; skipping data message");
+            return;
+        }
+
+        try
+        {
+            var ids = userIds.ToList();
+            var tokens = await _context.DeviceTokens
+                .Where(d => ids.Contains(d.UserId))
+                .Select(d => d.Token)
+                .ToListAsync();
+
+            if (tokens.Count == 0) return;
+
+            // FCM allows at most 500 tokens per multicast
+            foreach (var chunk in tokens.Chunk(500))
+            {
+                var message = new MulticastMessage
+                {
+                    Tokens = chunk,
+                    Data = data,
+                    Android = new AndroidConfig { Priority = Priority.High },
+                    Apns = new ApnsConfig { Aps = new Aps { ContentAvailable = true } }
+                };
+
+                await SendMulticastAsync(message, chunk);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send data message to {Count} users", userIds.Count());
+        }
+    }
+
+    private async Task SendMulticastAsync(MulticastMessage message, IReadOnlyList<string> tokens)
+    {
+        var response = await FirebaseMessaging.DefaultInstance.SendEachForMulticastAsync(message);
+
+        // Drop tokens FCM says are dead (app uninstalled, token rotated), so we stop sending to them.
+        var deadTokens = response.Responses
+            .Select((r, i) => (r, Token: tokens[i]))
+            .Where(x => !x.r.IsSuccess &&
+                        x.r.Exception?.MessagingErrorCode is MessagingErrorCode.Unregistered
+                                                          or MessagingErrorCode.SenderIdMismatch)
+            .Select(x => x.Token)
+            .ToList();
+
+        if (deadTokens.Count > 0)
+        {
+            await _context.DeviceTokens
+                .Where(d => deadTokens.Contains(d.Token))
+                .ExecuteDeleteAsync();
+        }
+
+        if (response.FailureCount > 0)
+        {
+            _logger.LogWarning("Push: {Failed} of {Total} deliveries failed", response.FailureCount, tokens.Count);
         }
     }
 }

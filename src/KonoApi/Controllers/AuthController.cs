@@ -66,8 +66,8 @@ public class AuthController : ControllerBase
             request.FirstName,
             request.SecondName,
             request.PhoneNumber,
-            request.UserRole,
-            request.MobilePhoneType);
+            request.UserRole
+            );
 
         if (!result.Success) return BadRequest(new { message = result.Message });
 

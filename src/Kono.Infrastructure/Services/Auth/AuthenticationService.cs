@@ -12,7 +12,7 @@ public interface IAuthenticationService
     Task<LoginResult> LoginUserAsync(string email, string password);
     Task<LoginResult> LoginOwnerAsync(string email, string password);
     Task<LoginResult> RegisterUserAsync(string email, string password, string username,
-        string? firstName, string? secondName, string? phoneNumber, UserRole? userRole, string? mobilePhoneType);
+        string? firstName, string? secondName, string? phoneNumber, UserRole? userRole);
     Task<LoginResult> RegisterOwnerAsync(string email, string password,
         string? firstName, string? secondName, string? phoneNumber);
     Task<LoginResult> RefreshUserTokenAsync(string refreshToken);
@@ -57,7 +57,7 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, GetUserAccountType(user));
+        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, GetUserAccountType(user), user.RestaurantId);
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
 
         var refreshTokenEntity = new RefreshToken
@@ -123,7 +123,7 @@ public class AuthenticationService : IAuthenticationService
     }
 
     public async Task<LoginResult> RegisterUserAsync(string email, string password, string username,
-        string? firstName, string? secondName, string? phoneNumber, UserRole? userRole, string? mobilePhoneType)
+        string? firstName, string? secondName, string? phoneNumber, UserRole? userRole)
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
@@ -148,7 +148,7 @@ public class AuthenticationService : IAuthenticationService
 
         var hashed = BCrypt.Net.BCrypt.HashPassword(password);
 
-        var newUser = new Kono.Identity.Domain.Users.User
+        var newUser = new User
         {
             Id = Guid.NewGuid(),
             RestaurantId = null,
@@ -159,13 +159,12 @@ public class AuthenticationService : IAuthenticationService
             SecondName = secondName ?? string.Empty,
             PhoneNumber = phoneNumber ?? string.Empty,
             UserRole = userRole,
-            MobilePhoneType = mobilePhoneType,
             CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
         };
 
         await _userRepository.AddAsync(newUser);
 
-        var accessToken = _jwtTokenService.GenerateAccessToken(newUser.Id, newUser.Email, GetUserAccountType(newUser));
+        var accessToken = _jwtTokenService.GenerateAccessToken(newUser.Id, newUser.Email, GetUserAccountType(newUser), newUser.RestaurantId);
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
 
         var refreshTokenEntity = new Kono.Identity.Domain.RefreshTokens.RefreshToken
@@ -262,9 +261,9 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        var (accountId, email, accountType) = account.Value;
+        var (accountId, email, accountType, restaurantId) = account.Value;
 
-        var newAccessToken = _jwtTokenService.GenerateAccessToken(accountId, email, accountType);
+        var newAccessToken = _jwtTokenService.GenerateAccessToken(accountId, email, accountType, restaurantId);
         var newRefreshToken = _jwtTokenService.GenerateRefreshToken();
 
         storedRefreshToken.IsRevoked = true;
@@ -294,13 +293,13 @@ public class AuthenticationService : IAuthenticationService
         };
     }
 
-    private async Task<(Guid Id, string Email, string AccountType)?> FindAccountAsync(Guid id)
+    private async Task<(Guid Id, string Email, string AccountType, Guid? RestaurantId)?> FindAccountAsync(Guid id)
     {
         var user = await _userRepository.GetByIdAsync(id);
-        if (user != null) return (user.Id, user.Email, GetUserAccountType(user));
+        if (user != null) return (user.Id, user.Email, GetUserAccountType(user), user.RestaurantId);
 
         var owner = await _ownerRepository.GetByIdAsync(id);
-        if (owner != null) return (owner.Id, owner.Email, "owner");
+        if (owner != null) return (owner.Id, owner.Email, "owner", null);
 
         return null;
     }
@@ -318,7 +317,7 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, GetUserAccountType(user));
+        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, GetUserAccountType(user), user.RestaurantId);
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
 
         var refreshTokenEntity = new RefreshToken

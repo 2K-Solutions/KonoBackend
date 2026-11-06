@@ -28,6 +28,7 @@ public class OrderController : ControllerBase
         _ordersRepository = ordersRepository;
     }
 
+    //Allows the worker to create a new order
     [HttpPost("{userId}/create-order")]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
     {
@@ -48,6 +49,7 @@ public class OrderController : ControllerBase
         return Ok(result.message);
     }
 
+    //Allows the worker to get all their orders
     [HttpGet("{userId}/get-my-orders")]
     public async Task<IActionResult> GetMyOrders()
     {
@@ -62,6 +64,7 @@ public class OrderController : ControllerBase
         return Ok(orders);
     }
 
+    //Allows the worker to get all items from a specific order
     [HttpGet("{orderId}/get-order-items")]
     public async Task<IActionResult> GetOrderItems(Guid orderId)
     {
@@ -79,6 +82,7 @@ public class OrderController : ControllerBase
         return Ok(orderItems);
     }
 
+    //Allows the worker to edit the items in a specific order
     [HttpPatch("{orderId}/edit-order-items")]
     public async Task<IActionResult> EditOrderItem(Guid orderId, [FromBody] CreateOrderRequest request)
     {
@@ -99,6 +103,7 @@ public class OrderController : ControllerBase
         return Ok(result.message);
     }
 
+    //Allows the worker to delete a specific order and its items
     [HttpDelete("{orderId}/delete-order")]
     public async Task<IActionResult> DeleteOrderAndItems(Guid orderId)
     {

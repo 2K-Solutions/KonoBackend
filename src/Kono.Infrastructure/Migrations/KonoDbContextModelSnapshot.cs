@@ -336,6 +336,9 @@ namespace Kono.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("MenuHash")
+                        .HasColumnType("varchar(64)");
+
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
 
