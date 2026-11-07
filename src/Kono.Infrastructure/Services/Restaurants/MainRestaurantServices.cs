@@ -294,13 +294,12 @@ public class MainRestaurantServices
         return table;
     }
 
-    public async Task<List<Tables>> GetTables(Guid restaurantId, Guid ownerId)
+    public async Task<List<Tables>> GetTables(Guid restaurantId, Guid userId)
     {
         var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
-        var users = await _restaurantRepository.GetRestaurantUsersByRestaurantandOwnerIdAsync(restaurantId, ownerId);
-        if (restaurant is null || restaurant.OwnerId != ownerId || users.Find(u => u.Id == ownerId) is null)
+        if (restaurant is null)
         {
-            throw new UnauthorizedAccessException("You are not a part of this restaurant.");
+            throw new KeyNotFoundException("Restaurant not found.");
         }
 
         var tables = await _tableRepository.GetTablesByRestaurantIdAsync(restaurantId);
