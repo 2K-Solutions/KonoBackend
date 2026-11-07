@@ -66,7 +66,7 @@ public class MenuItemService
     // Recomputes the menu hash, stores it on the restaurant and pushes it to the restaurant's workers, Returns: the new hash
     public async Task<string> UpdateMenuHashAsync(Guid restaurantId)
     {
-        var restaurant = await _context.Restaurants.FindAsync(restaurantId)
+        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId)
             ?? throw new ArgumentException($"Restaurant with ID {restaurantId} does not exist.");
 
         var hash = await ComputeMenuHashAsync(restaurantId);
@@ -91,7 +91,7 @@ public class MenuItemService
     // Returns the stored menu hash, generating it if the restaurant doesn't have one yet (e.g. seeded data)
     public async Task<string> GetMenuHashAsync(Guid restaurantId)
     {
-        var restaurant = await _context.Restaurants.FindAsync(restaurantId)
+        var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId)
             ?? throw new ArgumentException($"Restaurant with ID {restaurantId} does not exist.");
 
         return restaurant.MenuHash ?? await UpdateMenuHashAsync(restaurantId);
@@ -106,15 +106,20 @@ public class MenuItemService
             return new MenuHashCheckResponse(true);
         }
 
+        var menu = await GetMenuWithHashAsync(restaurantId);
+        return new MenuHashCheckResponse(false, menu.MenuHash, menu.FoodItems, menu.DrinkItems);
+    }
+
+    // Returns all food and drink items of the restaurant together with the menu hash
+    public async Task<MenuWithHashResponse> GetMenuWithHashAsync(Guid restaurantId)
+    {
         var items = await _context.MenuItem
             .Where(mi => mi.RestaurantId == restaurantId)
             .ToListAsync();
 
         var dtos = items.Select(mi => new MenuItemDto(mi.Id, mi.Name, mi.Price, mi.IsDrink)).ToList();
 
-        // Hash is computed from the exact items returned, so the device never stores a hash that doesn't match its menu
-        return new MenuHashCheckResponse(
-            false,
+        return new MenuWithHashResponse(
             MenuHasher.Compute(items),
             dtos.Where(d => !d.IsDrink).ToList(),
             dtos.Where(d => d.IsDrink).ToList());

@@ -11,6 +11,7 @@ using Kono.Infrastructure.Contracts.MenuItems;
 using Kono.Menu.Domain;
 using Kono.Infrastructure.Contracts.Restaurants;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Kono.Infrastructure.Services.Notifications;
 
 
 
@@ -23,13 +24,16 @@ public class MainRestaurantServices
     private readonly ITableRepository _tableRepository;
     private readonly IOwnerRepository _ownerRepository;
     private readonly IUserRepository _userRepository;
+    private readonly INotificationService _notificationService;
 
     public MainRestaurantServices(KonoDbContext context,
         IRestaurantRepository restaurantRepository,
         ITableRepository tableRepository,
         IOwnerRepository ownerRepository,
-        IUserRepository userRepository)
+        IUserRepository userRepository,
+        INotificationService notificationService)
     {
+        _notificationService = notificationService;
         _context = context;
         _restaurantRepository = restaurantRepository;
         _tableRepository = tableRepository;
@@ -222,8 +226,17 @@ public class MainRestaurantServices
         if (restaurant is null || restaurant.OwnerId != ownerId || restaurant.DeletedAt != null)
             return MembershipResult.Fail(MembershipError.Forbidden, "You do not own this user's restaurant");
 
+        var restaurantId = user.RestaurantId.Value;
         user.RestaurantId = null;
         await _userRepository.SaveChangesAsync();
+
+        await _notificationService.SendDataToUsersAsync(
+            [user.Id],
+            new Dictionary<string, string>
+            {
+                ["type"] = "kicked_from_restaurant",
+                ["restaurantId"] = restaurantId.ToString()
+            });
 
         return MembershipResult.Ok(user.Id, user.RestaurantId);
     }
@@ -281,13 +294,12 @@ public class MainRestaurantServices
         return table;
     }
 
-    public async Task<List<Tables>> GetTables(Guid restaurantId, Guid ownerId)
+    public async Task<List<Tables>> GetTables(Guid restaurantId, Guid userId)
     {
         var restaurant = await _restaurantRepository.GetRestaurantByIdAsync(restaurantId);
-        var users = await _restaurantRepository.GetRestaurantUsersByRestaurantandOwnerIdAsync(restaurantId, ownerId);
-        if (restaurant is null || restaurant.OwnerId != ownerId || users.Find(u => u.Id == ownerId) is null)
+        if (restaurant is null)
         {
-            throw new UnauthorizedAccessException("You are not a part of this restaurant.");
+            throw new KeyNotFoundException("Restaurant not found.");
         }
 
         var tables = await _tableRepository.GetTablesByRestaurantIdAsync(restaurantId);

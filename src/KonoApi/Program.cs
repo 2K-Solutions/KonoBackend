@@ -21,6 +21,7 @@ using System.Security.Claims;
 using System.Text;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using KonoApi.Middleware;
 
 // Ensure Npgsql treats DateTime like legacy behavior to avoid Kind mismatch errors
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -147,6 +148,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseAuthentication();
+app.UseMiddleware<RestaurantMembershipMiddleware>();
 app.UseAuthorization();
 
 app.MapGet("/", () => Results.Ok("Yurr"));

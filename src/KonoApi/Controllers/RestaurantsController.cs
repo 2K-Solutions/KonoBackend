@@ -340,15 +340,18 @@ public class RestaurantsController : ControllerBase
 
     //Allows the owner or worker to get current tables
     [HttpGet("{restaurantId:guid}/tables")]
-    public async Task<IActionResult> GetTables(Guid restaurantId)
+    public async Task<IActionResult> GetTables()
     {
         var accountType = User.FindFirst("accountType")?.Value;
         if (accountType != "owner" && accountType != "worker") return Forbid();
 
-        var ownerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(ownerIdClaim, out var ownerId)) return Unauthorized();
+        var restaurantIdClaim = User.FindFirst("restaurantId")?.Value;
+        if (!Guid.TryParse(restaurantIdClaim, out var restaurantId)) return Unauthorized();
 
-        var tables = await _mainRestaurantServices.GetTables(restaurantId, ownerId);
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
+
+        var tables = await _mainRestaurantServices.GetTables(restaurantId, userId);
 
         return Ok(tables);
     }

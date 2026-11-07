@@ -142,6 +142,25 @@ public static class DataSeeder
             }
         }
 
+        var rijekaRestaurantId = await context.Restaurants
+            .Where(r => r.RestaurantName == "Kono Rijeka")
+            .Select(r => r.Id)
+            .FirstOrDefaultAsync();
+
+        if (rijekaRestaurantId != Guid.Empty &&
+            !await context.Tables.AnyAsync(t => t.RestaurantId == rijekaRestaurantId))
+        {
+            for (short i = 1; i <= 3; i++)
+            {
+                context.Tables.Add(new Tables
+                {
+                    Id = Guid.NewGuid(),
+                    RestaurantId = rijekaRestaurantId,
+                    TableNumber = i,
+                    TableState = TableState.Available
+                });
+            }
+        }
 
         await context.SaveChangesAsync();
 
